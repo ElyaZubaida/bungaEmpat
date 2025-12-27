@@ -1,0 +1,249 @@
+/* General styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fffbf0; /* Soft light color from the palette */
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Sidebar styling */
+.sidebar {
+    height: 100%;
+    width: 250px;
+    background-color: #c9a97c; /* Soft beige color from the palette */
+    position: fixed;
+    padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 100; /* Ensure sidebar is on top */
+}
+
+.sidebar h2 {
+    text-align: center;
+    color: #fff;
+    font-size: 1.5em;
+    margin-bottom: 30px;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 15px;
+    text-align: center;
+}
+
+.sidebar ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.1em;
+}
+
+.sidebar ul li a:hover {
+    background-color: #d8c6a0; /* Light beige hover effect */
+    border-radius: 5px;
+}
+
+/* Main content */
+.main-content {
+    margin-left: 270px; /* Space for the sidebar */
+    padding: 20px;
+    padding-top: 20px; /* To avoid content being hidden behind the fixed sidebar */
+}
+
+/* Buttons */
+.addbutton {
+    display: flex;
+    justify-content: flex-end; /* Align the Add button to the right */
+    width: 100%; /* Ensure it stretches across */
+}
+.add-button {
+    background-color: rgb(44, 146, 242); /* Light beige for add button */
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.add-button:hover {
+    background-color: #3a86ff; /* Darker blue for hover */
+}
+
+/* Edit Button (Green) */
+.edit {
+    background-color: #4CAF50; /* Green color */
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.edit:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+/* Delete Button (Red) */
+.delete {
+    background-color: #f44336; /* Red color */
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 5px;
+}
+
+.delete:hover {
+    background-color: #e53935; /* Darker red on hover */
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+table th, table td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+table th {
+    background-color: #b88d6d; /* Soft brown color for headers */
+    color: white;
+}
+
+table tr:nth-child(even) {
+    background-color: #f7f7f7; /* Very light grey for even rows */
+}
+
+table tr:hover {
+    background-color: #f1f1f1; /* Slight grey hover effect */
+}
+
+table a {
+    color: #b88d6d;
+    text-decoration: none;
+}
+
+table a:hover {
+    text-decoration: underline;
+}
+
+/* Modal Styling */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scrolling if needed */
+    background-color: rgba(0, 0, 0, 0.4); /* Black with transparency */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+}
+
+/* Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 1em;
+    margin-bottom: 5px;
+}
+
+input, select {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #4CAF50; /* Green color for buttons */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+button:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+/* Style for select and input elements inside Food Product Fields */
+#foodFields input, #foodFields select {
+    padding: 12px;
+    margin-bottom: 15px; /* Space between fields */
+    width: 100%; /* Full width for inputs */
+    box-sizing: border-box; /* Ensure padding is included in width */
+    border: 1px solid #ccc; /* Soft border color */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 1em;
+    background-color: #fff; /* White background for inputs */
+}
+
+/* Optional: Highlight the border when an input is focused */
+#foodFields input:focus, #foodFields select:focus {
+    border-color: #4CAF50; /* Green border on focus */
+    outline: none; /* Remove default outline */
+}
+
+/* Style for the "Select Food Type" dropdown */
+#foodType {
+    background-color: #f1f1f1; /* Light background color for dropdown */
+    color: #333; /* Text color */
+    cursor: pointer; /* Change cursor to pointer */
+}
+
+/* Optional: Adding a hover effect to the dropdown */
+#foodType:hover {
+    background-color: #eaeaea; /* Slightly darker background when hovering */
+}
+
+/* Padding and margin for the section as a whole */
+#foodFields div {
+    margin-bottom: 20px; /* Space between sections inside the Food Fields */
+}
