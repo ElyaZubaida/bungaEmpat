@@ -1,18 +1,32 @@
 <?php
-// Dummy data for suppliers
-$suppliers = [
-    ['Supp_ID' => 1, 'Supp_Name' => 'ABC Supplier', 'Supp_Phone' => '1234567890', 'Supp_Company' => 'ABC Corp', 'Supp_Email' => 'abc@company.com', 'Supp_Address' => '123 Street, City'],
-    ['Supp_ID' => 2, 'Supp_Name' => 'XYZ Supplier', 'Supp_Phone' => '0987654321', 'Supp_Company' => 'XYZ Ltd', 'Supp_Email' => 'xyz@company.com', 'Supp_Address' => '456 Avenue, City'],
-];
+// Include the Oracle database connection file
+include 'db_connection.php';
 
-include 'sidebar.php'; // Include sidebar navigation
+// Fetch supplier data from the database
+$query = "
+    SELECT s.SUPP_ID, s.SUPP_NAME, s.SUPP_PHONE, s.SUPP_COMPANY, s.SUPP_EMAIL, s.SUPP_ADDRESS
+    FROM SUPPLIER s";
+$stid = oci_parse($conn, $query);
+oci_execute($stid);
+
+// Store the fetched data in an array
+$suppliers = [];
+while ($row = oci_fetch_assoc($stid)) {
+    $suppliers[] = $row;
+}
+
+// Free the statement and close the connection
+oci_free_statement($stid);
+oci_close($conn);
+
+// Include the sidebar navigation
+include 'sidebar.php';
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Management</title>
     <link rel="stylesheet" href="styles.css">
     <script>
@@ -35,7 +49,6 @@ include 'sidebar.php'; // Include sidebar navigation
         // Confirm Delete Supplier
         function confirmDelete(suppID) {
             const confirmation = confirm("Are you sure you want to delete this supplier?");
-            
             if (confirmation) {
                 // Redirect to delete_supplier.php page
                 window.location.href = 'delete_supplier.php?supp_id=' + suppID;
@@ -73,15 +86,15 @@ include 'sidebar.php'; // Include sidebar navigation
                 <?php
                 foreach ($suppliers as $supplier) {
                     echo "<tr>
-                            <td>" . $supplier['Supp_ID'] . "</td>
-                            <td>" . $supplier['Supp_Name'] . "</td>
-                            <td>" . $supplier['Supp_Phone'] . "</td>
-                            <td>" . $supplier['Supp_Company'] . "</td>
-                            <td>" . $supplier['Supp_Email'] . "</td>
-                            <td>" . $supplier['Supp_Address'] . "</td>
+                            <td>" . $supplier['SUPP_ID'] . "</td>
+                            <td>" . $supplier['SUPP_NAME'] . "</td>
+                            <td>" . $supplier['SUPP_PHONE'] . "</td>
+                            <td>" . $supplier['SUPP_COMPANY'] . "</td>
+                            <td>" . $supplier['SUPP_EMAIL'] . "</td>
+                            <td>" . $supplier['SUPP_ADDRESS'] . "</td>
                             <td>
-                                <button onclick=\"openEditSupplierModal('" . $supplier['Supp_ID'] . "', '" . $supplier['Supp_Name'] . "', '" . $supplier['Supp_Phone'] . "', '" . $supplier['Supp_Company'] . "', '" . $supplier['Supp_Email'] . "', '" . $supplier['Supp_Address'] . "')\" class='edit'>Edit</button>
-                                <button onclick=\"confirmDelete('" . $supplier['Supp_ID'] . "')\" class='delete'>Delete</button>
+                                <button onclick=\"openEditSupplierModal('" . $supplier['SUPP_ID'] . "', '" . $supplier['SUPP_NAME'] . "', '" . $supplier['SUPP_PHONE'] . "', '" . $supplier['SUPP_COMPANY'] . "', '" . $supplier['SUPP_EMAIL'] . "', '" . $supplier['SUPP_ADDRESS'] . "')\" class='edit'>Edit</button>
+                                <button onclick=\"confirmDelete('" . $supplier['SUPP_ID'] . "')\" class='delete'>Delete</button>
                             </td>
                         </tr>";
                 }

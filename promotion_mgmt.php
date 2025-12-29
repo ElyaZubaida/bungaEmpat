@@ -1,10 +1,17 @@
 <?php
-// Dummy data for promotions
-$promotions = [
-    ['Promo_ID' => 1, 'Promo_Name' => 'New Year Sale', 'Discount' => 20, 'Start_Date' => '01/01/2025', 'End_Date' => '10/01/2025', 'Status' => 'Active'],
-    ['Promo_ID' => 2, 'Promo_Name' => 'Student Discount', 'Discount' => 10, 'Start_Date' => '05/01/2025', 'End_Date' => '31/01/2025', 'Status' => 'Active'],
-    ['Promo_ID' => 3, 'Promo_Name' => 'Clearance Sale', 'Discount' => 40, 'Start_Date' => '15/12/2024', 'End_Date' => '31/12/2024', 'Status' => 'Expired'],
-];
+include 'db_connection.php';
+
+$query = "SELECT PROMO_ID, PROMO_NAME, PROMO_DESC, TO_CHAR(PROMO_STARTDATE, 'DD/MM/YYYY') AS START_DATE, TO_CHAR(PROMO_ENDDATE, 'DD/MM/YYYY') AS END_DATE, PROMO_AMOUNT FROM PROMOTION";
+$stid = oci_parse($conn, $query);
+oci_execute($stid);
+
+$promotions = [];
+while ($row = oci_fetch_assoc($stid)) {
+    $promotions[] = $row;
+}
+
+oci_free_statement($stid);
+oci_close($conn);
 
 include 'sidebar.php';
 ?>
@@ -12,6 +19,7 @@ include 'sidebar.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Promotion Management</title>
     <link rel="stylesheet" href="styles.css">
 
@@ -20,15 +28,15 @@ include 'sidebar.php';
             document.getElementById("addPromotionModal").style.display = "block";
         }
 
-        function openEditPromotionModal(id, name, discount, start, end, status) {
+        function openEditPromotionModal(id, name, description, startDate, endDate, amount) {
             document.getElementById("editPromotionModal").style.display = "block";
 
             document.getElementById("editPromo_ID").value = id;
             document.getElementById("editPromo_Name").value = name;
-            document.getElementById("editPromo_Discount").value = discount;
-            document.getElementById("editStart_Date").value = start;
-            document.getElementById("editEnd_Date").value = end;
-            document.getElementById("editStatus").value = status;
+            document.getElementById("editPromo_Desc").value = description;
+            document.getElementById("editStart_Date").value = startDate;
+            document.getElementById("editEnd_Date").value = endDate;
+            document.getElementById("editPromo_Amount").value = amount;
         }
 
         function confirmDelete(promoID) {
@@ -59,36 +67,37 @@ include 'sidebar.php';
             <tr>
                 <th>ID</th>
                 <th>Promotion Name</th>
-                <th>Discount (%)</th>
+                <th>Description</th>
                 <th>Start Date</th>
                 <th>End Date</th>
-                <th>Status</th>
+                <th>Amount</th>
                 <th>Action</th>
             </tr>
 
             <?php foreach ($promotions as $promo) : ?>
                 <tr>
-                    <td><?= $promo['Promo_ID']; ?></td>
-                    <td><?= $promo['Promo_Name']; ?></td>
-                    <td><?= $promo['Discount']; ?></td>
-                    <td><?= $promo['Start_Date']; ?></td>
-                    <td><?= $promo['End_Date']; ?></td>
-                    <td><?= $promo['Status']; ?></td>
+                    <td><?= $promo['PROMO_ID']; ?></td>
+                    <td><?= $promo['PROMO_NAME']; ?></td>
+                    <td><?= $promo['PROMO_DESC']; ?></td>
+                    <td><?= $promo['START_DATE']; ?></td>
+                    <td><?= $promo['END_DATE']; ?></td>
+                    <td><?= $promo['PROMO_AMOUNT']; ?></td>
 
                     <td>
-                        <button
+                        <button 
                             class="edit"
                             onclick="openEditPromotionModal(
-                                '<?= $promo['Promo_ID']; ?>',
-                                '<?= $promo['Promo_Name']; ?>',
-                                '<?= $promo['Discount']; ?>',
-                                '<?= $promo['Start_Date']; ?>',
-                                '<?= $promo['End_Date']; ?>',
-                                '<?= $promo['Status']; ?>'
-                            )"
-                        >Edit</button>
+                                '<?= $promo['PROMO_ID']; ?>',
+                                '<?= $promo['PROMO_NAME']; ?>',
+                                '<?= $promo['PROMO_DESC']; ?>',
+                                '<?= $promo['START_DATE']; ?>',
+                                '<?= $promo['END_DATE']; ?>',
+                                '<?= $promo['PROMO_AMOUNT']; ?>'
+                            )">
+                            Edit
+                        </button>
 
-                        <button class="delete" onclick="confirmDelete('<?= $promo['Promo_ID']; ?>')">
+                        <button class="delete" onclick="confirmDelete('<?= $promo['PROMO_ID']; ?>')">
                             Delete
                         </button>
                     </td>
@@ -109,8 +118,8 @@ include 'sidebar.php';
             <label>Promotion Name</label>
             <input type="text" name="promoName" required>
 
-            <label>Discount (%)</label>
-            <input type="number" name="discount" required>
+            <label>Description</label>
+            <input type="text" name="promoDesc" required>
 
             <label>Start Date</label>
             <input type="text" name="startDate" placeholder="DD/MM/YYYY" required>
@@ -118,12 +127,8 @@ include 'sidebar.php';
             <label>End Date</label>
             <input type="text" name="endDate" placeholder="DD/MM/YYYY" required>
 
-            <label>Status</label>
-            <select name="status">
-                <option value="Active">Active</option>
-                <option value="Upcoming">Upcoming</option>
-                <option value="Expired">Expired</option>
-            </select>
+            <label>Amount</label>
+            <input type="number" name="promoAmount" required>
 
             <button type="submit" class="add-button">Add</button>
         </form>
@@ -143,8 +148,8 @@ include 'sidebar.php';
             <label>Promotion Name</label>
             <input type="text" id="editPromo_Name" name="promoName" required>
 
-            <label>Discount (%)</label>
-            <input type="number" id="editPromo_Discount" name="discount" required>
+            <label>Description</label>
+            <input type="text" id="editPromo_Desc" name="promoDesc" required>
 
             <label>Start Date</label>
             <input type="text" id="editStart_Date" name="startDate" required>
@@ -152,12 +157,8 @@ include 'sidebar.php';
             <label>End Date</label>
             <input type="text" id="editEnd_Date" name="endDate" required>
 
-            <label>Status</label>
-            <select id="editStatus" name="status">
-                <option value="Active">Active</option>
-                <option value="Upcoming">Upcoming</option>
-                <option value="Expired">Expired</option>
-            </select>
+            <label>Amount</label>
+            <input type="number" id="editPromo_Amount" name="promoAmount" required>
 
             <button type="submit" class="add-button">Update</button>
         </form>

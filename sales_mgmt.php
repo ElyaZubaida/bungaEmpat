@@ -1,10 +1,20 @@
 <?php
-// Dummy data for sales
-$sales = [
-    ['Sale_ID' => 1, 'Sale_Date' => '27/12/2025', 'Sale_Amount' => 50.00, 'Sale_GrandAmount' => 100.00, 'Sale_PaymentType' => 'Cash', 'Cust_ID' => 1, 'Staff_ID' => 2, 'Promo_ID' => 1, 'Quantity' => 2, 'Sub_Amount' => 50.00],
-    ['Sale_ID' => 2, 'Sale_Date' => '21/12/2025', 'Sale_Amount' => 30.00, 'Sale_GrandAmount' => 60.00, 'Sale_PaymentType' => 'Card', 'Cust_ID' => 2, 'Staff_ID' => 3, 'Promo_ID' => 2, 'Quantity' => 1, 'Sub_Amount' => 30.00],
-    
-];
+include 'db_connection.php';
+
+$query = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_AMOUNT, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, s.CUST_ID, s.STAFF_ID, s.PROMO_ID, ps.PS_QUANTITY, ps.PS_SUBPRICE
+          FROM SALE s
+          JOIN PRODUCT_SALE ps ON s.SALE_ID = ps.SALE_ID";
+$stid = oci_parse($conn, $query);
+oci_execute($stid);
+
+$sales = [];
+while ($row = oci_fetch_assoc($stid)) {
+    $sales[] = $row;
+}
+
+oci_free_statement($stid);
+oci_close($conn);
+
 include 'sidebar.php';
 ?>
 
@@ -39,18 +49,19 @@ include 'sidebar.php';
                     <th>Promo ID</th>
                 </tr>
                 <?php
+                // Iterate over the sales array and display data in the table
                 foreach ($sales as $sale) {
                     echo "<tr>
-                            <td>" . $sale['Sale_ID'] . "</td>
-                            <td>" . $sale['Sale_Date'] . "</td>
-                            <td>" . $sale['Sale_Amount'] . "</td>
-                            <td>" . $sale['Sale_GrandAmount'] . "</td>
-                            <td>" . $sale['Sale_PaymentType'] . "</td>
-                            <td>" . $sale['Quantity'] . "</td>
-                            <td>" . $sale['Sub_Amount'] . "</td>
-                            <td>" . $sale['Cust_ID'] . "</td>
-                            <td>" . $sale['Staff_ID'] . "</td>
-                            <td>" . $sale['Promo_ID'] . "</td>
+                            <td>" . $sale['SALE_ID'] . "</td>
+                            <td>" . $sale['SALE_DATE'] . "</td>
+                            <td>" . $sale['SALE_AMOUNT'] . "</td>
+                            <td>" . $sale['SALE_GRANDAMOUNT'] . "</td>
+                            <td>" . $sale['SALE_PAYMENTTYPE'] . "</td>
+                            <td>" . $sale['PS_QUANTITY'] . "</td>
+                            <td>" . $sale['PS_SUBPRICE'] . "</td>
+                            <td>" . $sale['CUST_ID'] . "</td>
+                            <td>" . $sale['STAFF_ID'] . "</td>
+                            <td>" . $sale['PROMO_ID'] . "</td>
                         </tr>";
                 }
                 ?>

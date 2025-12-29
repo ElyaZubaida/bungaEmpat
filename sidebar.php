@@ -32,6 +32,9 @@
         <!-- Supplier Management Link -->
         <li><a href="supplier_mgmt.php">Supplier Management</a></li>
 
+        <!-- Supplier Order Link -->
+        <li><a href="supplier_order.php">Order Products</a></li>
+
         <!-- Branch Management Link -->
         <li><a href="branch_mgmt.php">Branch Management</a></li>
 

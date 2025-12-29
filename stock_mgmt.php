@@ -1,11 +1,19 @@
 <?php
-// Dummy data for stock
-$stock = [
-    ['Stock_ID' => 1, 'Prod_ID' => 1, 'Branch_ID' => 1, 'Staff_ID' => 2, 'Stock_Quantity' => 100, 'Stock_In' => 50, 'Stock_Out' => 30],
-    ['Stock_ID' => 2, 'Prod_ID' => 2, 'Branch_ID' => 2, 'Staff_ID' => 3, 'Stock_Quantity' => 80, 'Stock_In' => 30, 'Stock_Out' => 40],
-    ['Stock_ID' => 3, 'Prod_ID' => 3, 'Branch_ID' => 3, 'Staff_ID' => 1, 'Stock_Quantity' => 120, 'Stock_In' => 70, 'Stock_Out' => 20],
-    ['Stock_ID' => 4, 'Prod_ID' => 4, 'Branch_ID' => 4, 'Staff_ID' => 2, 'Stock_Quantity' => 90, 'Stock_In' => 60, 'Stock_Out' => 10],
-];
+include 'db_connection.php';
+
+$query = "
+    SELECT s.STOCK_ID, s.PROD_ID, s.BRANCH_ID, s.STAFF_ID, s.STOCK_QUANTITY, s.STOCK_IN, s.STOCK_OUT
+    FROM STOCK s";
+$stid = oci_parse($conn, $query);
+oci_execute($stid);
+
+$stocks = [];
+while ($row = oci_fetch_assoc($stid)) {
+    $stocks[] = $row;
+}
+
+oci_free_statement($stid);
+oci_close($conn);
 
 include 'sidebar.php';
 ?>
@@ -14,7 +22,6 @@ include 'sidebar.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Management</title>
     <link rel="stylesheet" href="styles.css">
     <script>
@@ -38,7 +45,6 @@ include 'sidebar.php';
         // Confirm Delete Stock
         function confirmDelete(stockID) {
             const confirmation = confirm("Are you sure you want to delete this stock entry?");
-            
             if (confirmation) {
                 // Redirect to the delete_stock.php page
                 window.location.href = 'delete_stock.php?stock_id=' + stockID;
@@ -72,23 +78,29 @@ include 'sidebar.php';
                     <th>Stock Out</th>
                     <th>Action</th>
                 </tr>
-                <?php
-                foreach ($stock as $stockItem) {
-                    echo "<tr>
-                            <td>" . $stockItem['Stock_ID'] . "</td>
-                            <td>" . $stockItem['Prod_ID'] . "</td>
-                            <td>" . $stockItem['Branch_ID'] . "</td>
-                            <td>" . $stockItem['Staff_ID'] . "</td>
-                            <td>" . $stockItem['Stock_Quantity'] . "</td>
-                            <td>" . $stockItem['Stock_In'] . "</td>
-                            <td>" . $stockItem['Stock_Out'] . "</td>
-                            <td>
-                                <button onclick=\"openEditStockModal(" . $stockItem['Stock_ID'] . ", " . $stockItem['Prod_ID'] . ", " . $stockItem['Branch_ID'] . ", " . $stockItem['Staff_ID'] . ", " . $stockItem['Stock_Quantity'] . ", " . $stockItem['Stock_In'] . ", " . $stockItem['Stock_Out'] . ")\" class='edit'>Edit</button>
-                                <button onclick=\"confirmDelete(" . $stockItem['Stock_ID'] . ")\" class='delete'>Delete</button>
-                            </td>
-                        </tr>";
-                }
-                ?>
+                <?php foreach ($stocks as $stockItem) : ?>
+                    <tr>
+                        <td><?= $stockItem['STOCK_ID']; ?></td>
+                        <td><?= $stockItem['PROD_ID']; ?></td>
+                        <td><?= $stockItem['BRANCH_ID']; ?></td>
+                        <td><?= $stockItem['STAFF_ID']; ?></td>
+                        <td><?= $stockItem['STOCK_QUANTITY']; ?></td>
+                        <td><?= $stockItem['STOCK_IN']; ?></td>
+                        <td><?= $stockItem['STOCK_OUT']; ?></td>
+                        <td>
+                            <button onclick="openEditStockModal(
+                                '<?= $stockItem['STOCK_ID']; ?>',
+                                '<?= $stockItem['PROD_ID']; ?>',
+                                '<?= $stockItem['BRANCH_ID']; ?>',
+                                '<?= $stockItem['STAFF_ID']; ?>',
+                                '<?= $stockItem['STOCK_QUANTITY']; ?>',
+                                '<?= $stockItem['STOCK_IN']; ?>',
+                                '<?= $stockItem['STOCK_OUT']; ?>'
+                            )" class="edit">Edit</button>
+                            <button onclick="confirmDelete('<?= $stockItem['STOCK_ID']; ?>')" class="delete">Delete</button>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
             </table>
         </div>
     </div>
@@ -100,13 +112,13 @@ include 'sidebar.php';
             <h2>Add Stock</h2>
             <form action="add_stock.php" method="post">
                 <label for="prodID">Product ID</label>
-                <input type="number" id="prodID" name="prodID" required>
+                <input type="text" id="prodID" name="prodID" required>
 
                 <label for="branchID">Branch ID</label>
-                <input type="number" id="branchID" name="branchID" required>
+                <input type="text" id="branchID" name="branchID" required>
 
                 <label for="staffID">Staff ID</label>
-                <input type="number" id="staffID" name="staffID" required>
+                <input type="text" id="staffID" name="staffID" required>
 
                 <label for="stockQuantity">Stock Quantity</label>
                 <input type="number" id="stockQuantity" name="stockQuantity" required>
@@ -131,13 +143,13 @@ include 'sidebar.php';
                 <input type="hidden" id="editStock_ID" name="stockID">
 
                 <label for="editProd_ID">Product ID</label>
-                <input type="number" id="editProd_ID" name="prodID" required>
+                <input type="text" id="editProd_ID" name="prodID" required>
 
                 <label for="editBranch_ID">Branch ID</label>
-                <input type="number" id="editBranch_ID" name="branchID" required>
+                <input type="text" id="editBranch_ID" name="branchID" required>
 
                 <label for="editStaff_ID">Staff ID</label>
-                <input type="number" id="editStaff_ID" name="staffID" required>
+                <input type="text" id="editStaff_ID" name="staffID" required>
 
                 <label for="editStock_Quantity">Stock Quantity</label>
                 <input type="number" id="editStock_Quantity" name="stockQuantity" required>

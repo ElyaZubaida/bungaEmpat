@@ -1,10 +1,17 @@
 <?php
-// Dummy data for customers
-$customers = [
-    ['Cust_ID' => 1, 'Cust_Name' => 'Ali Ahmad', 'Cust_Email' => 'ali@example.com', 'Cust_Phone' => '0123456789', 'Cust_Type' => 'Regular', 'Cust_Address' => 'Kuala Lumpur'],
-    ['Cust_ID' => 2, 'Cust_Name' => 'Siti Nur', 'Cust_Email' => 'siti@example.com', 'Cust_Phone' => '0178882222', 'Cust_Type' => 'VIP', 'Cust_Address' => 'Shah Alam'],
-    ['Cust_ID' => 3, 'Cust_Name' => 'Rahman', 'Cust_Email' => 'rahman@example.com', 'Cust_Phone' => '0195553333', 'Cust_Type' => 'Regular', 'Cust_Address' => 'Penang'],
-];
+include 'db_connection.php';
+
+$query = "SELECT * FROM CUSTOMER";
+$stid = oci_parse($conn, $query);
+oci_execute($stid);
+
+$customers = [];
+while ($row = oci_fetch_assoc($stid)) {
+    $customers[] = $row;
+}
+
+oci_free_statement($stid);
+oci_close($conn);
 
 include 'sidebar.php';
 ?>
@@ -21,15 +28,15 @@ include 'sidebar.php';
             document.getElementById("addCustomerModal").style.display = "block";
         }
 
-        function openEditCustomerModal(id, name, email, phone, type, address) {
+        function openEditCustomerModal(id, name, email, phone, loyaltyPoints, dateRegistered) {
             document.getElementById("editCustomerModal").style.display = "block";
 
             document.getElementById("editCust_ID").value = id;
             document.getElementById("editCust_Name").value = name;
             document.getElementById("editCust_Email").value = email;
             document.getElementById("editCust_Phone").value = phone;
-            document.getElementById("editCust_Type").value = type;
-            document.getElementById("editCust_Address").value = address;
+            document.getElementById("editCust_LoyaltyPoints").value = loyaltyPoints;
+            document.getElementById("editCust_DateRegistered").value = dateRegistered;
         }
 
         function confirmDelete(custID) {
@@ -46,6 +53,7 @@ include 'sidebar.php';
 </head>
 
 <body>
+
 <div class="container">
     <div class="main-content">
         <h1>Customer Management</h1>
@@ -62,36 +70,37 @@ include 'sidebar.php';
                 <th>Customer Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Type</th>
-                <th>Address</th>
+                <th>Loyalty Points</th>
+                <th>Registration Date</th>
                 <th>Action</th>
             </tr>
 
             <?php foreach ($customers as $cust) : ?>
                 <tr>
-                    <td><?= $cust['Cust_ID']; ?></td>
-                    <td><?= $cust['Cust_Name']; ?></td>
-                    <td><?= $cust['Cust_Email']; ?></td>
-                    <td><?= $cust['Cust_Phone']; ?></td>
-                    <td><?= $cust['Cust_Type']; ?></td>
-                    <td><?= $cust['Cust_Address']; ?></td>
+                    <td><?= $cust['CUST_ID']; ?></td>
+                    <td><?= $cust['CUST_NAME']; ?></td>
+                    <td><?= $cust['CUST_EMAIL']; ?></td>
+                    <td><?= $cust['CUST_PHONE']; ?></td>
+                    <td><?= $cust['CUST_LOYALTYPOINTS']; ?></td>
+                    <td><?= $cust['CUST_DATEREGISTERED']; ?></td>
 
                     <td>
                         <button 
                             class="edit"
                             onclick="openEditCustomerModal(
-                                '<?= $cust['Cust_ID']; ?>',
-                                '<?= $cust['Cust_Name']; ?>',
-                                '<?= $cust['Cust_Email']; ?>',
-                                '<?= $cust['Cust_Phone']; ?>',
-                                '<?= $cust['Cust_Type']; ?>',
-                                '<?= $cust['Cust_Address']; ?>'
-                            )"
-                        >
+                                '<?= $cust['CUST_ID']; ?>',
+                                '<?= $cust['CUST_NAME']; ?>',
+                                '<?= $cust['CUST_EMAIL']; ?>',
+                                '<?= $cust['CUST_PHONE']; ?>',
+                                '<?= $cust['CUST_LOYALTYPOINTS']; ?>',
+                                '<?= $cust['CUST_DATEREGISTERED']; ?>'
+                            )">
                             Edit
                         </button>
 
-                        <button class="delete" onclick="confirmDelete('<?= $cust['Cust_ID']; ?>')">
+                        <button 
+                            class="delete" 
+                            onclick="confirmDelete('<?= $cust['CUST_ID']; ?>')">
                             Delete
                         </button>
                     </td>
@@ -118,16 +127,13 @@ include 'sidebar.php';
             <label>Phone</label>
             <input type="text" name="custPhone" required>
 
-            <label>Type</label>
-            <select name="custType">
-                <option value="Regular">Regular</option>
-                <option value="VIP">VIP</option>
-            </select>
+            <label>Loyalty Points</label>
+            <input type="number" name="custLoyaltyPoints" value="0">
 
-            <label>Address</label>
-            <input type="text" name="custAddress">
+            <label>Registration Date</label>
+            <input type="date" name="custDateRegistered" required>
 
-            <button type="submit" class="add-button">Add</button>
+            <button type="submit" class="add-button">Add Customer</button>
         </form>
     </div>
 </div>
@@ -151,16 +157,13 @@ include 'sidebar.php';
             <label>Phone</label>
             <input type="text" id="editCust_Phone" name="custPhone" required>
 
-            <label>Type</label>
-            <select id="editCust_Type" name="custType">
-                <option value="Regular">Regular</option>
-                <option value="VIP">VIP</option>
-            </select>
+            <label>Loyalty Points</label>
+            <input type="number" id="editCust_LoyaltyPoints" name="custLoyaltyPoints">
 
-            <label>Address</label>
-            <input type="text" id="editCust_Address" name="custAddress">
+            <label>Registration Date</label>
+            <input type="date" id="editCust_DateRegistered" name="custDateRegistered" required>
 
-            <button type="submit" class="add-button">Update</button>
+            <button type="submit" class="add-button">Update Customer</button>
         </form>
     </div>
 </div>
