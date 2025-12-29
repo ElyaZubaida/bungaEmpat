@@ -1,11 +1,19 @@
 <?php
-// Dummy data for branches
-$branches = [
-    ['Branch_ID' => 1, 'Branch_Name' => 'Main Branch', 'Branch_Location' => 'Kuala Lumpur'],
-    ['Branch_ID' => 2, 'Branch_Name' => 'North Branch', 'Branch_Location' => 'Penang'],
-];
+include 'db_connection.php';
 
-include 'sidebar.php'; // sidebar navigation
+$query = "SELECT * FROM BRANCH";
+$stid = oci_parse($conn, $query);
+oci_execute($stid);
+
+$branches = [];
+while ($row = oci_fetch_assoc($stid)) {
+    $branches[] = $row;
+}
+
+oci_free_statement($stid);
+oci_close($conn);
+
+include 'sidebar.php';
 ?>
 
 <!DOCTYPE html>
@@ -21,12 +29,13 @@ include 'sidebar.php'; // sidebar navigation
             document.getElementById("addBranchModal").style.display = "block";
         }
 
-        function openEditBranchModal(id, name, location) {
+        function openEditBranchModal(id, name, location, phone, email) {
             document.getElementById("editBranchModal").style.display = "block";
-
             document.getElementById("editBranch_ID").value = id;
             document.getElementById("editBranch_Name").value = name;
             document.getElementById("editBranch_Location").value = location;
+            document.getElementById("editBranch_Phone").value = phone;
+            document.getElementById("editBranch_Email").value = email;
         }
 
         function confirmDelete(branchID) {
@@ -58,30 +67,36 @@ include 'sidebar.php'; // sidebar navigation
             <tr>
                 <th>ID</th>
                 <th>Branch Name</th>
-                <th>Location</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th>Email</th>
                 <th>Action</th>
             </tr>
 
             <?php foreach ($branches as $branch): ?>
                 <tr>
-                    <td><?= $branch['Branch_ID']; ?></td>
-                    <td><?= $branch['Branch_Name']; ?></td>
-                    <td><?= $branch['Branch_Location']; ?></td>
+                    <td><?= $branch['BRANCH_ID']; ?></td>
+                    <td><?= $branch['BRANCH_NAME']; ?></td>
+                    <td><?= $branch['BRANCH_ADDRESS']; ?></td>
+                    <td><?= $branch['BRANCH_PHONE']; ?></td>
+                    <td><?= $branch['BRANCH_EMAIL']; ?></td>
 
                     <td>
                         <button 
-                            class="edit"
+                            class="edit" 
                             onclick="openEditBranchModal(
-                                '<?= $branch['Branch_ID']; ?>',
-                                '<?= $branch['Branch_Name']; ?>',
-                                '<?= $branch['Branch_Location']; ?>'
+                                '<?= $branch['BRANCH_ID']; ?>',
+                                '<?= $branch['BRANCH_NAME']; ?>',
+                                '<?= $branch['BRANCH_ADDRESS']; ?>',
+                                '<?= $branch['BRANCH_PHONE']; ?>',
+                                '<?= $branch['BRANCH_EMAIL']; ?>'
                             )">
                             Edit
                         </button>
 
                         <button 
                             class="delete" 
-                            onclick="confirmDelete('<?= $branch['Branch_ID']; ?>')">
+                            onclick="confirmDelete('<?= $branch['BRANCH_ID']; ?>')">
                             Delete
                         </button>
                     </td>
@@ -105,6 +120,12 @@ include 'sidebar.php'; // sidebar navigation
             <label>Location</label>
             <input type="text" name="branchLocation" required>
 
+            <label>Phone</label>
+            <input type="text" name="branchPhone" required>
+
+            <label>Email</label>
+            <input type="email" name="branchEmail" required>
+
             <button type="submit" class="add-button">Add Branch</button>
         </form>
     </div>
@@ -118,7 +139,6 @@ include 'sidebar.php'; // sidebar navigation
         <h2>Edit Branch</h2>
 
         <form action="edit_branch.php" method="post">
-
             <input type="hidden" id="editBranch_ID" name="branchID">
 
             <label>Branch Name</label>
@@ -127,6 +147,12 @@ include 'sidebar.php'; // sidebar navigation
             <label>Location</label>
             <input type="text" id="editBranch_Location" name="branchLocation" required>
 
+            <label>Phone</label>
+            <input type="text" id="editBranch_Phone" name="branchPhone" required>
+
+            <label>Email</label>
+            <input type="email" id="editBranch_Email" name="branchEmail" required>
+
             <button type="submit" class="add-button">Update Branch</button>
         </form>
     </div>
@@ -134,3 +160,4 @@ include 'sidebar.php'; // sidebar navigation
 
 </body>
 </html>
+

@@ -1,13 +1,21 @@
 <?php
-// Dummy staff list
-$staffs = [
-    ['Staff_ID' => 1, 'Name' => 'Ali Ahmad', 'Email' => 'ali@example.com', 'Role' => 'Manager', 'Status' => 'Active'],
-    ['Staff_ID' => 2, 'Name' => 'Siti Aminah', 'Email' => 'siti@example.com', 'Role' => 'Cashier', 'Status' => 'Active'],
-    ['Staff_ID' => 3, 'Name' => 'Rahman Jamal', 'Email' => 'rahman@example.com', 'Role' => 'Assistant', 'Status' => 'Inactive'],
-];
+include 'db_connection.php';
+
+$query = "SELECT * FROM STAFF";
+$stid = oci_parse($conn, $query);
+oci_execute($stid);
+
+$staffs = [];
+while ($row = oci_fetch_assoc($stid)) {
+    $staffs[] = $row;
+}
+
+oci_free_statement($stid);
+oci_close($conn);
 
 include 'sidebar.php';
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,14 +27,19 @@ include 'sidebar.php';
             document.getElementById("addStaffModal").style.display = "block";
         }
 
-        function openEditModal(id, name, email, role, status) {
+        function openEditModal(id, name, username, password, phone, email, category, salary, branch_id, manager_id) {
             document.getElementById("editStaffModal").style.display = "block";
 
             document.getElementById("editStaff_ID").value = id;
             document.getElementById("editName").value = name;
+            document.getElementById("editUsername").value = username;
+            document.getElementById("editPassword").value = password;
+            document.getElementById("editPhone").value = phone;
             document.getElementById("editEmail").value = email;
-            document.getElementById("editRole").value = role;
-            document.getElementById("editStatus").value = status;
+            document.getElementById("editCategory").value = category;
+            document.getElementById("editSalary").value = salary;
+            document.getElementById("editBranch_ID").value = branch_id;
+            document.getElementById("editManager_ID").value = manager_id;
         }
 
         function confirmDelete(staffID) {
@@ -55,33 +68,46 @@ include 'sidebar.php';
             <tr>
                 <th>ID</th>
                 <th>Name</th>
+                <th>Username</th>
+                <th>Phone</th>
                 <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
+                <th>Category</th>
+                <th>Salary</th>
+                <th>Branch ID</th>
+                <th>Manager ID</th>
                 <th>Action</th>
             </tr>
 
             <?php foreach ($staffs as $staff): ?>
                 <tr>
-                    <td><?= $staff['Staff_ID']; ?></td>
-                    <td><?= $staff['Name']; ?></td>
-                    <td><?= $staff['Email']; ?></td>
-                    <td><?= $staff['Role']; ?></td>
-                    <td><?= $staff['Status']; ?></td>
+                    <td><?= $staff['STAFF_ID']; ?></td>
+                    <td><?= $staff['STAFF_NAME']; ?></td>
+                    <td><?= $staff['STAFF_USERNAME']; ?></td>
+                    <td><?= $staff['STAFF_PHONE']; ?></td>
+                    <td><?= $staff['STAFF_EMAIL']; ?></td>
+                    <td><?= $staff['STAFF_CATEGORY']; ?></td>
+                    <td><?= $staff['STAFF_SALARY']; ?></td>
+                    <td><?= $staff['BRANCH_ID']; ?></td>
+                    <td><?= $staff['MANAGER_ID']; ?></td>
 
                     <td>
                         <button
                             class="edit"
                             onclick="openEditModal(
-                                '<?= $staff['Staff_ID']; ?>',
-                                '<?= $staff['Name']; ?>',
-                                '<?= $staff['Email']; ?>',
-                                '<?= $staff['Role']; ?>',
-                                '<?= $staff['Status']; ?>'
+                                '<?= $staff['STAFF_ID']; ?>',
+                                '<?= $staff['STAFF_NAME']; ?>',
+                                '<?= $staff['STAFF_USERNAME']; ?>',
+                                '<?= $staff['STAFF_PASSWORD']; ?>',
+                                '<?= $staff['STAFF_PHONE']; ?>',
+                                '<?= $staff['STAFF_EMAIL']; ?>',
+                                '<?= $staff['STAFF_CATEGORY']; ?>',
+                                '<?= $staff['STAFF_SALARY']; ?>',
+                                '<?= $staff['BRANCH_ID']; ?>',
+                                '<?= $staff['MANAGER_ID']; ?>'
                             )"
                         >Edit</button>
 
-                        <button class="delete" onclick="confirmDelete('<?= $staff['Staff_ID']; ?>')">
+                        <button class="delete" onclick="confirmDelete('<?= $staff['STAFF_ID']; ?>')">
                             Delete
                         </button>
                     </td>
@@ -102,17 +128,29 @@ include 'sidebar.php';
             <label>Name</label>
             <input type="text" name="name" required>
 
+            <label>Username</label>
+            <input type="text" name="username" required>
+
+            <label>Password</label>
+            <input type="password" name="password" required>
+
+            <label>Phone</label>
+            <input type="text" name="phone" required>
+
             <label>Email</label>
             <input type="email" name="email" required>
 
-            <label>Role</label>
-            <input type="text" name="role" required>
+            <label>Category</label>
+            <input type="text" name="category" required>
 
-            <label>Status</label>
-            <select name="status">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-            </select>
+            <label>Salary</label>
+            <input type="number" name="salary" required>
+
+            <label>Branch ID</label>
+            <input type="text" name="branch_id" required>
+
+            <label>Manager ID</label>
+            <input type="text" name="manager_id" required>
 
             <button type="submit" class="add-button">Add</button>
         </form>
@@ -127,22 +165,34 @@ include 'sidebar.php';
         <h2>Edit Staff</h2>
 
         <form action="edit_staff.php" method="post">
-            <input type="hidden" id="editStaff_ID" name="staffID">
+            <input type="hidden" id="editStaff_ID" name="staff_id">
 
             <label>Name</label>
             <input type="text" id="editName" name="name" required>
 
+            <label>Username</label>
+            <input type="text" id="editUsername" name="username" required>
+
+            <label>Password</label>
+            <input type="password" id="editPassword" name="password" required>
+
+            <label>Phone</label>
+            <input type="text" id="editPhone" name="phone" required>
+
             <label>Email</label>
             <input type="email" id="editEmail" name="email" required>
 
-            <label>Role</label>
-            <input type="text" id="editRole" name="role" required>
+            <label>Category</label>
+            <input type="text" id="editCategory" name="category" required>
 
-            <label>Status</label>
-            <select id="editStatus" name="status">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-            </select>
+            <label>Salary</label>
+            <input type="number" id="editSalary" name="salary" required>
+
+            <label>Branch ID</label>
+            <input type="text" id="editBranch_ID" name="branch_id" required>
+
+            <label>Manager ID</label>
+            <input type="text" id="editManager_ID" name="manager_id" required>
 
             <button type="submit" class="add-button">Update</button>
         </form>
