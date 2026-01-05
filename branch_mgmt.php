@@ -114,16 +114,19 @@ include 'sidebar.php';
         <h2>Add Branch</h2>
 
         <form action="add_branch.php" method="post">
-            <label>Branch Name</label>
+            <label for="branchID">Branch ID</label>
+            <input type="text" name="branchID" required value="BR-??">
+
+            <label for="branchName">Branch Name</label>
             <input type="text" name="branchName" required>
 
-            <label>Location</label>
+            <label for="branchLocation">Location</label>
             <input type="text" name="branchLocation" required>
 
-            <label>Phone</label>
+            <label for="branchPhone">Phone</label>
             <input type="text" name="branchPhone" required>
 
-            <label>Email</label>
+            <label for="branchEmail">Email</label>
             <input type="email" name="branchEmail" required>
 
             <button type="submit" class="add-button">Add Branch</button>
