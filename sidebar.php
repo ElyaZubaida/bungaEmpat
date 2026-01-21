@@ -6,39 +6,23 @@
 </head>
 
 <div class="sidebar">
+    <div class="logo-container">
+        <img src="img/logo.png" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;" onerror="this.onerror=null; this.src='default_logo.png';">
+    </div>
+    
     <h2>Bunga Empat Co.</h2>
+    
     <ul>
-        <!-- Dashboard Link -->
-        <li><a href="dashboard.php">Dashboard</a></li>
-
-        <!-- Product Management Link -->
-        <li><a href="product_mgmt.php">Product Management</a></li>
-
-        <!-- Customer Management Link -->
-        <li><a href="customer_mgmt.php">Customer Management</a></li>
-
-        <!-- Sales Management Link -->
-        <li><a href="sales_mgmt.php">Sales Management</a></li>
-
-        <!-- Promotion Management Link -->
-        <li><a href="promotion_mgmt.php">Promotion Management</a></li>
-
-        <!-- Stock Management Link -->
-        <li><a href="stock_mgmt.php">Stock Management</a></li>
-
-        <!-- Staff Management Link -->
-        <li><a href="staff_mgmt.php">Staff Management</a></li>
-
-        <!-- Supplier Management Link -->
-        <li><a href="supplier_mgmt.php">Supplier Management</a></li>
-
-        <!-- Supplier Order Link -->
-        <li><a href="supplier_order.php">Order Products</a></li>
-
-        <!-- Branch Management Link -->
-        <li><a href="branch_mgmt.php">Branch Management</a></li>
-
-        <!-- Logout Link -->
-        <li><a href="logout.php">Logout</a></li>
+        <li><a href="dashboard.php"><span class="material-symbols-outlined">dashboard</span> Dashboard</a></li>
+        <li><a href="product_mgmt.php"><span class="material-symbols-outlined">inventory_2</span> Products</a></li>
+        <li><a href="stock_mgmt.php"><span class="material-symbols-outlined">package_2</span> Stock</a></li>
+        <li><a href="sales_mgmt.php"><span class="material-symbols-outlined">payments</span> Sales</a></li>
+        <li><a href="customer_mgmt.php"><span class="material-symbols-outlined">group</span> Customers</a></li>
+        <li><a href="promotion_mgmt.php"><span class="material-symbols-outlined">sell</span> Promotions</a></li>
+        <li><a href="staff_mgmt.php"><span class="material-symbols-outlined">badge</span> Staff</a></li>
+        <li><a href="supplier_mgmt.php"><span class="material-symbols-outlined">local_shipping</span> Suppliers</a></li>
+        <li><a href="supplier_order.php"><span class="material-symbols-outlined">shopping_cart_checkout</span> Order Products</a></li>
+        <li><a href="branch_mgmt.php"><span class="material-symbols-outlined">storefront</span> Branches</a></li>
+        <li class="logout-item"><a href="logout.php"><span class="material-symbols-outlined">logout</span> Logout</a></li>
     </ul>
 </div>

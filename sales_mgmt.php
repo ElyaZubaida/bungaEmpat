@@ -1,15 +1,25 @@
 <?php
 include 'db_connection.php';
 
-$query = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_AMOUNT, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, s.CUST_ID, s.STAFF_ID, s.PROMO_ID, ps.PS_QUANTITY, ps.PS_SUBPRICE
+// Fetch Sales with Product Details
+$query = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_AMOUNT, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, 
+                 s.CUST_ID, s.STAFF_ID, s.PROMO_ID, ps.PS_QUANTITY, ps.PS_SUBPRICE
           FROM SALE s
-          JOIN PRODUCT_SALE ps ON s.SALE_ID = ps.SALE_ID";
+          JOIN PRODUCT_SALE ps ON s.SALE_ID = ps.SALE_ID
+          ORDER BY s.SALE_ID DESC";
+
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
 $sales = [];
+$total_revenue = 0;
+$cash_sales = 0;
+$card_sales = 0;
+
 while ($row = oci_fetch_assoc($stid)) {
     $sales[] = $row;
+    $total_revenue += $row['SALE_GRANDAMOUNT'];
+    
 }
 
 oci_free_statement($stid);
@@ -22,51 +32,77 @@ include 'sidebar.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Management</title>
+    <title>Sales Management | Bunga Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="main-content">
+
+<div class="main-content">
+    <div class="dashboard-header">
+        <div>
             <h1>Sales Management</h1>
-            <div class="button-container">
-                <div class="addbutton">
-                    <button class="add-button" onclick="openAddSaleModal()">Add</button>
-                </div>
-            </div>
-            <table id="salesTable">
-                <tr>
-                    <th>Sale ID</th>
-                    <th>Sale Date</th>
-                    <th>Sale Amount</th>
-                    <th>Sale Grand Amount</th>
-                    <th>Payment Type</th>
-                    <th>Quantity</th>
-                    <th>Sub Amount</th>
-                    <th>Customer ID</th>
-                    <th>Staff ID</th>
-                    <th>Promo ID</th>
-                </tr>
-                <?php
-                // Iterate over the sales array and display data in the table
-                foreach ($sales as $sale) {
-                    echo "<tr>
-                            <td>" . $sale['SALE_ID'] . "</td>
-                            <td>" . $sale['SALE_DATE'] . "</td>
-                            <td>" . $sale['SALE_AMOUNT'] . "</td>
-                            <td>" . $sale['SALE_GRANDAMOUNT'] . "</td>
-                            <td>" . $sale['SALE_PAYMENTTYPE'] . "</td>
-                            <td>" . $sale['PS_QUANTITY'] . "</td>
-                            <td>" . $sale['PS_SUBPRICE'] . "</td>
-                            <td>" . $sale['CUST_ID'] . "</td>
-                            <td>" . $sale['STAFF_ID'] . "</td>
-                            <td>" . $sale['PROMO_ID'] . "</td>
-                        </tr>";
-                }
-                ?>
-            </table>
+        </div>
+        <button class="btn-add" onclick="window.location.href='create_sale.php'">+ Create New Sale</button>
+    </div>
+
+    <div class="section-divider"></div>
+
+   <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Transactions</h3>
+            <span class="stat-number"><?= count($sales); ?></span>
+        </div>
+        <div class="stat-card" style="border-left-color: #4CAF50;">
+            <h3>Total Revenue</h3>
+            <span class="stat-number" style="color: #4CAF50;">RM <?= number_format($total_revenue, 2); ?></span>
         </div>
     </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Grand Total</th>
+                    <th>Payment</th>
+                    <th>Qty</th>
+                    <th>Sub Price</th>
+                    <th>Customer</th>
+                    <th>Staff</th>
+                    <th>Promo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($sales as $sale) : ?>
+                <tr>
+                    <td style="font-weight:600; color:#888;"><?= $sale['SALE_ID']; ?></td>
+                    <td><?= $sale['SALE_DATE']; ?></td>
+                    <td>RM <?= number_format($sale['SALE_AMOUNT'], 2); ?></td>
+                    <td style="font-weight:600;">RM <?= number_format($sale['SALE_GRANDAMOUNT'], 2); ?></td>
+                    <td>
+                        <?php 
+                            // Dynamic Pill Colors based on Payment Type
+                            $payType = strtoupper($sale['SALE_PAYMENTTYPE']);
+                            $pillStyle = ($payType == 'CASH') ? 'background:#e8f5e9; color:#2e7d32;' : 'background:#e3f2fd; color:#1565c0;';
+                        ?>
+                        <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: 500; <?= $pillStyle; ?>">
+                            <?= $sale['SALE_PAYMENTTYPE']; ?>
+                        </span>
+                    </td>
+                    <td><?= $sale['PS_QUANTITY']; ?></td>
+                    <td>RM <?= number_format($sale['PS_SUBPRICE'], 2); ?></td>
+                    <td><?= $sale['CUST_ID'] ?: '-'; ?></td>
+                    <td><?= $sale['STAFF_ID']; ?></td>
+                    <td><?= $sale['PROMO_ID'] ?: 'None'; ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 </body>
 </html>
