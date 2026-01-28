@@ -1,7 +1,7 @@
 <?php
 include 'db_connection.php';
 
-$query = "SELECT * FROM CUSTOMER";
+$query = "SELECT * FROM CUSTOMER ORDER BY CUST_ID ASC";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
@@ -146,10 +146,10 @@ include 'sidebar.php';
         <h2>Edit Customer</h2>
 
         <form action="edit_customer.php" method="post">
-            <input type="hidden" id="editCust_ID" name="custID">
+            <input type="hidden" id="editCust_ID" name="custID" value="<?php echo $row['CUST_ID']; ?>">
 
             <label>Name</label>
-            <input type="text" id="editCust_Name" name="custName" required>
+            <input type="text" id="editCust_Name" name="custName" value="<?php echo $row['CUST_NAME']; ?>">
 
             <label>Email</label>
             <input type="email" id="editCust_Email" name="custEmail" required>

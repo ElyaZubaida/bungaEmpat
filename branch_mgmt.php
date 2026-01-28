@@ -1,7 +1,7 @@
 <?php
 include 'db_connection.php';
 
-$query = "SELECT * FROM BRANCH";
+$query = "SELECT * FROM BRANCH ORDER BY BRANCH_ID ASC";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 

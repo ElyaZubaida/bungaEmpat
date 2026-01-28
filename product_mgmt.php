@@ -4,9 +4,16 @@ include 'db_connection.php';
 $query = "SELECT p.PROD_ID, p.PROD_NAME, p.PROD_LISTPRICE, p.PROD_NETPRICE, p.PROD_BRAND, p.PROD_CATEGORY, fp.FOOD_CATEGORY, fp.EXPIRY_DATE, fp.STORAGE_INSTRUCTIONS, nfp.NONFOOD_CATEGORY
     FROM PRODUCT p
     LEFT JOIN FOOD_PRODUCT fp ON p.PROD_ID = fp.PROD_ID
-    LEFT JOIN NONFOOD_PRODUCT nfp ON p.PROD_ID = nfp.PROD_ID";
+    LEFT JOIN NONFOOD_PRODUCT nfp ON p.PROD_ID = nfp.PROD_ID
+    ORDER BY p.PROD_ID ASC";
+
 $stid = oci_parse($conn, $query);
-oci_execute($stid);
+$result = oci_execute($stid);
+
+if (!$result) {
+    $e = oci_error($stid);
+    die("Query Error: " . $e['message']);
+}
 
 $products = [];
 while ($row = oci_fetch_assoc($stid)) {
@@ -143,6 +150,9 @@ include 'sidebar.php';
                 <label>Net Price</label>
                 <input type="number" name="prodNetPrice" required>
 
+                <label>Product Brand</label>
+                <input type="text" name="prodBrand" required>
+
                 <label>Category</label>
                 <select name="prodCategory" id="prodCategory" required onchange="toggleFields()">
                     <option value="Food">Food</option>
@@ -157,6 +167,8 @@ include 'sidebar.php';
                         <option value="Vegetable">Vegetable</option>
                         <option value="Meat">Meat</option>
                         <option value="Drink">Drink</option>
+                        <option value="Snacks">Snacks</option>
+
                     </select>
 
                     <label>Expiry Date</label>
