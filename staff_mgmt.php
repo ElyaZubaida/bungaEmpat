@@ -1,7 +1,7 @@
 <?php
 include 'db_connection.php';
 
-$query = "SELECT * FROM STAFF";
+$query = "SELECT * FROM STAFF ORDER BY STAFF_ID";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 

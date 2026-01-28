@@ -7,7 +7,7 @@ $query = "SELECT p.PROD_ID, p.PROD_NAME, p.PROD_LISTPRICE, p.PROD_NETPRICE, p.PR
     LEFT JOIN NONFOOD_PRODUCT nfp ON p.PROD_ID = nfp.PROD_ID
     ORDER BY p.PROD_ID ASC";
 
-$stid = oci_parse($conn, $query);
+$stid = oci_parse($conn, $query); 
 $result = oci_execute($stid);
 
 if (!$result) {

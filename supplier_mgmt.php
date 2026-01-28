@@ -3,9 +3,9 @@
 include 'db_connection.php';
 
 // Fetch supplier data from the database
-$query = "
-    SELECT s.SUPP_ID, s.SUPP_NAME, s.SUPP_PHONE, s.SUPP_COMPANY, s.SUPP_EMAIL, s.SUPP_ADDRESS
-    FROM SUPPLIER s";
+$query =    "SELECT SUPP_ID, SUPP_NAME, SUPP_PHONE, SUPP_COMPANY, SUPP_EMAIL, SUPP_ADDRESS
+            FROM SUPPLIER";
+    
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
@@ -41,7 +41,7 @@ include 'sidebar.php';
             document.getElementById("editSupp_ID").value = suppID;
             document.getElementById("editSupp_Name").value = suppName;
             document.getElementById("editSupp_Phone").value = suppPhone;
-            document.getElementById("editSupp_Company").value = suppCompany;
+            document.getElementById("editSupp_Brand").value = suppBrand;
             document.getElementById("editSupp_Email").value = suppEmail;
             document.getElementById("editSupp_Address").value = suppAddress;
         }

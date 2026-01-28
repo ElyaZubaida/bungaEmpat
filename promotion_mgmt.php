@@ -152,10 +152,10 @@ include 'sidebar.php';
             <input type="text" id="editPromo_Desc" name="promoDesc" required>
 
             <label>Start Date</label>
-            <input type="text" id="editStart_Date" name="startDate" required>
+            <input type="date" id="editStart_Date" name="startDate" required>
 
             <label>End Date</label>
-            <input type="text" id="editEnd_Date" name="endDate" required>
+            <input type="date" id="editEnd_Date" name="endDate" required>
 
             <label>Amount</label>
             <input type="number" id="editPromo_Amount" name="promoAmount" required>
