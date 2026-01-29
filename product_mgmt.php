@@ -1,7 +1,7 @@
 <?php
 include 'db_connection.php';
 
-// --- 1. SQL QUERY FOR SUMMARY CARDS ---
+// --- 1. SUMMARY CARDS QUERY ---
 $countQuery = "SELECT 
                 COUNT(*) AS TOTAL,
                 COUNT(CASE WHEN PROD_CATEGORY = 'Food' THEN 1 END) AS FOOD,
@@ -23,7 +23,7 @@ $queryStandard = "SELECT p.PROD_ID, p.PROD_NAME, p.PROD_LISTPRICE, p.PROD_NETPRI
                   LEFT JOIN NONFOOD_PRODUCT nfp ON p.PROD_ID = nfp.PROD_ID
                   ORDER BY p.PROD_ID ASC";
 
-// --- 3. EXACT EXPIRY QUERY ---
+// --- 3. QISTINA COMPLEX QUERY (EXPIRY) ---
 $queryExpiry = "SELECT P.PROD_ID, P.PROD_NAME, FP.EXPIRY_DATE, B.BRANCH_NAME, SK.STOCK_QUANTITY,
                     CASE 
                         WHEN FP.EXPIRY_DATE <= SYSDATE + 2 THEN 'URGENT'
@@ -36,26 +36,55 @@ $queryExpiry = "SELECT P.PROD_ID, P.PROD_NAME, FP.EXPIRY_DATE, B.BRANCH_NAME, SK
                 WHERE FP.EXPIRY_DATE BETWEEN SYSDATE AND SYSDATE + 7 AND SK.STOCK_QUANTITY > 0
                 ORDER BY FP.EXPIRY_DATE ASC";
 
-// Execute Standard Data
+// --- 4. AMIRA COMPLEX QUERY (1) ---
+$perfBranch = $_GET['perfBranch'] ?? 'Bunga Empat UiTM Shah Alam';
+$perfStart  = $_GET['perfStart'] ?? date('Y-m-01');
+$perfEnd    = $_GET['perfEnd'] ?? date('Y-m-d');
+
+$queryPerf = "SELECT p.PROD_ID, p.PROD_NAME, p.PROD_CATEGORY, SUM(ps.PS_QUANTITY) AS UNITS_SOLD, p.PROD_LISTPRICE,
+                TO_CHAR(SUM(ps.PS_SUBPRICE), '999,999.00') AS \"TOTAL REVENUE\",
+                (SELECT sup.SUPP_NAME 
+                FROM SUPPLIER sup 
+                WHERE sup.SUPP_ID = p.SUPP_ID) AS SUPPLIER
+              FROM PRODUCT p
+              JOIN PRODUCT_SALE ps ON p.PROD_ID = ps.PROD_ID
+              JOIN SALE s ON ps.SALE_ID = s.SALE_ID
+              JOIN STAFF st ON s.STAFF_ID = st.STAFF_ID
+              JOIN BRANCH b ON st.BRANCH_ID = b.BRANCH_ID
+              WHERE b.BRANCH_NAME = :input_branch
+              AND TRUNC(s.SALE_DATE) BETWEEN TO_DATE(:start_dt, 'YYYY-MM-DD') 
+              AND TO_DATE(:end_dt, 'YYYY-MM-DD')
+              GROUP BY p.PROD_ID, p.PROD_NAME, p.PROD_CATEGORY, p.PROD_LISTPRICE, p.SUPP_ID
+              ORDER BY SUM(ps.PS_QUANTITY) DESC";
+
+$stidPerf = oci_parse($conn, $queryPerf);
+oci_bind_by_name($stidPerf, ":input_branch", $perfBranch);
+oci_bind_by_name($stidPerf, ":start_dt", $perfStart);
+oci_bind_by_name($stidPerf, ":end_dt", $perfEnd);
+oci_execute($stidPerf);
+
+// Execution phase
 $stid1 = oci_parse($conn, $queryStandard);
 oci_execute($stid1);
 $standardProducts = [];
 while ($row = oci_fetch_assoc($stid1)) { $standardProducts[] = $row; }
 
-// Execute Expiry Alert Data
 $stid2 = oci_parse($conn, $queryExpiry);
 oci_execute($stid2);
 $expiryAlerts = [];
-$uniqueBranches = []; // To populate the filter dropdown
+$uniqueBranches = []; 
 while ($row = oci_fetch_assoc($stid2)) { 
     $expiryAlerts[] = $row; 
     if(!in_array($row['BRANCH_NAME'], $uniqueBranches)) $uniqueBranches[] = $row['BRANCH_NAME'];
 }
 
-oci_free_statement($countStid);
-oci_free_statement($stid1);
-oci_free_statement($stid2);
-oci_close($conn);
+$performanceData = [];
+while ($row = oci_fetch_assoc($stidPerf)) { $performanceData[] = $row; }
+
+$bListStid = oci_parse($conn, "SELECT BRANCH_NAME FROM BRANCH");
+oci_execute($bListStid);
+$allBranches = [];
+while($b = oci_fetch_assoc($bListStid)) { $allBranches[] = $b['BRANCH_NAME']; }
 
 include 'sidebar.php';
 ?>
@@ -69,43 +98,47 @@ include 'sidebar.php';
     <link rel="stylesheet" href="styles.css">
     <script>
         function showView(viewType) {
-            const standardTable = document.getElementById('standard-view');
-            const expiryTable = document.getElementById('expiry-view');
-            const expiryFilters = document.getElementById('expiry-filters');
+            const views = ['standard-view', 'expiry-view', 'perf-view'];
+            const filters = ['expiry-filters', 'perf-filters'];
             const title = document.getElementById('view-title');
 
+            views.forEach(v => { if(document.getElementById(v)) document.getElementById(v).style.display = 'none'; });
+            filters.forEach(f => { if(document.getElementById(f)) document.getElementById(f).style.display = 'none'; });
+
             if (viewType === 'EXPIRY') {
-                standardTable.style.display = 'none';
-                expiryTable.style.display = 'block';
-                expiryFilters.style.display = 'flex';
+                document.getElementById('expiry-view').style.display = 'block';
+                document.getElementById('expiry-filters').style.display = 'flex';
                 title.innerText = "Expiry Alerts (Next 7 Days)";
+            } else if (viewType === 'PERFORMANCE') {
+                document.getElementById('perf-view').style.display = 'block';
+                document.getElementById('perf-filters').style.display = 'flex';
+                title.innerText = "Product Sales Performance";
             } else {
-                expiryTable.style.display = 'none';
-                standardTable.style.display = 'block';
-                expiryFilters.style.display = 'none';
-                title.innerText = "Product List";
+                document.getElementById('standard-view').style.display = 'block';
+                title.innerText = "General Product List";
             }
         }
 
-        // JS FILTER LOGIC FOR EXPIRY TABLE
-        function applyExpiryFilters() {
-            const branchVal = document.getElementById('filterBranch').value;
-            const statusVal = document.getElementById('filterStatus').value;
-            const rows = document.querySelectorAll('.expiry-row');
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('perfBranch')) {
+                showView('PERFORMANCE');
+            } else {
+                showView('STANDARD');
+            }
+        };
 
-            rows.forEach(row => {
-                const branchMatch = (branchVal === 'ALL' || row.getAttribute('data-branch') === branchVal);
-                const statusMatch = (statusVal === 'ALL' || row.getAttribute('data-status') === statusVal);
-
-                if (branchMatch && statusMatch) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+        function confirmDelete(id) { 
+            if(confirm('Are you sure you want to delete product ' + id + '?')) {
+                window.location.href = 'delete_product.php?prod_id=' + id; 
+            }
         }
 
-        function openAddProductModal() { document.getElementById("addProductModal").style.display = "flex"; toggleFields(); }
+        function openAddProductModal() { document.getElementById("addProductModal").style.display = "flex"; }
+        function closeModal() {
+            document.getElementById("addProductModal").style.display = "none";
+            document.getElementById("editProductModal").style.display = "none";
+        }
         function openEditProductModal(id, name, listPrice, category) {
             document.getElementById("editProductModal").style.display = "flex";
             document.getElementById("editProd_ID").value = id;
@@ -113,17 +146,6 @@ include 'sidebar.php';
             document.getElementById("editProd_ListPrice").value = listPrice;
             document.getElementById("editProd_Category").value = category;
         }
-        function closeModal() {
-            document.getElementById("addProductModal").style.display = "none";
-            document.getElementById("editProductModal").style.display = "none";
-        }
-        function toggleFields() {
-            const category = document.getElementById("prodCategory").value;
-            document.getElementById("foodFields").style.display = (category === "Food") ? "block" : "none";
-            document.getElementById("nonFoodFields").style.display = (category === "Food") ? "none" : "block";
-        }
-        function confirmDelete(prodID) { if (confirm("Permanently delete product " + prodID + "?")) window.location.href = 'delete_product.php?prod_id=' + prodID; }
-        window.onclick = function(event) { if (event.target.className === 'modal') closeModal(); }
     </script>
 </head>
 <body>
@@ -134,21 +156,18 @@ include 'sidebar.php';
         <button class="btn-add" onclick="openAddProductModal()">+ Add New Product</button>
     </div>
 
-    <div class="section-divider"></div>
+     <div class="section-divider"></div>
 
     <div class="stats-grid">
         <div class="stat-card" onclick="showView('STANDARD')" style="cursor:pointer;">
-            <h3>Total Products</h3>
-            <span class="stat-number"><?= $totalProducts; ?></span>
-            <small style="display:block; color:#888;">Show All Items</small>
+            <h3 style="color: #fd79a8;">Total Products</h3><span class="stat-number" style="color: #fd79a8;"><?= $totalProducts; ?></span>
         </div>
         <div class="stat-card" onclick="showView('EXPIRY')" style="border-left-color: #f44336; cursor:pointer; background: #fff5f5;">
-            <h3 style="color: #c62828;">Urgent Expiry</h3>
-            <span class="stat-number" style="color: #f44336;"><?= count($expiryAlerts); ?></span>
-            <small style="display:block; color:#c62828; font-weight:600;">Check Alerts ⚠</small>
+            <h3 style="color: #c62828;">Urgent Expiry</h3><span class="stat-number" style="color: #f44336;"><?= count($expiryAlerts); ?></span>
         </div>
-        <div class="stat-card" style="border-left-color: #4CAF50;"><h3>Food Category</h3><span class="stat-number"><?= $totalFood; ?></span></div>
-        <div class="stat-card" style="border-left-color: #2196F3;"><h3>Non-Food Category</h3><span class="stat-number"><?= $totalNonFood; ?></span></div>
+        <div class="stat-card" onclick="showView('PERFORMANCE')" style="border-left-color: #4361ee; cursor:pointer;">
+            <h3 style="color: #4361ee;">Product Sales Performance</h3><span class="stat-number" style="color: #4361ee;"><?= count($performanceData); ?></span>
+        </div>
     </div>
 
     <h2 id="view-title" style="font-size: 1.1em; color: #555; margin-bottom: 15px;">General Product List</h2>
@@ -156,51 +175,55 @@ include 'sidebar.php';
     <div id="expiry-filters" class="filter-container" style="display:none;">
         <div class="filter-group">
             <label>Branch Location</label>
-            <select id="filterBranch" onchange="applyExpiryFilters()">
+            <select id="filterBranch">
                 <option value="ALL">All Branches</option>
-                <?php foreach($uniqueBranches as $branch): ?>
-                    <option value="<?= $branch ?>"><?= $branch ?></option>
-                <?php endforeach; ?>
+                <?php foreach($uniqueBranches as $branch): ?><option value="<?= $branch ?>"><?= $branch ?></option><?php endforeach; ?>
             </select>
         </div>
-        
-        <div class="filter-group">
-            <label>Priority Level</label>
-            <select id="filterStatus" onchange="applyExpiryFilters()">
-                <option value="ALL">All Levels</option>
-                <option value="URGENT">URGENT (Next 2 Days)</option>
-                <option value="WARNING">WARNING (Next 7 Days)</option>
-            </select>
-        </div>
+    </div>
 
-        <button type="button" class="btn-reset" onclick="resetExpiryFilters()">
-            Reset Filters
-        </button>
+    <div id="perf-filters" class="filter-container" style="display:none;">
+        <form method="GET" style="display: contents;">
+            <div class="filter-group">
+                <label>Branch Location</label>
+                <select name="perfBranch" style="min-width: 250px;">
+                    <?php foreach($allBranches as $bName): ?>
+                        <option value="<?= $bName ?>" <?= ($perfBranch == $bName) ? 'selected' : '' ?>><?= $bName ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Start Date</label>
+                <input type="date" name="perfStart" value="<?= $perfStart ?>">
+            </div>
+            <div class="filter-group">
+                <label>End Date</label>
+                <input type="date" name="perfEnd" value="<?= $perfEnd ?>">
+            </div>
+            <div class="filter-group">
+                <label style="visibility: hidden;">Align</label>
+                <button type="submit" class="btn-filter">Apply</button>
+            </div>
+        </form>
     </div>
 
     <div id="standard-view" class="table-container">
         <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Product Name</th>
-                    <th>Price (L/N)</th>
-                    <th>Brand</th>
-                    <th>Category</th>
-                    <th>Type Details</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
+            <thead><tr><th>ID</th><th>Product Name</th><th>Price</th><th>Brand</th><th>Category</th><th>Action</th></tr></thead>
             <tbody>
-                <?php foreach ($standardProducts as $product) : ?>
+                <?php foreach($standardProducts as $p): ?>
                 <tr>
-                    <td style="font-weight:600; color:#888;"><?= $product['PROD_ID']; ?></td>
-                    <td><?= $product['PROD_NAME']; ?></td>
-                    <td><span style="display:block;">L: RM<?= number_format($product['PROD_LISTPRICE'], 2); ?></span><small style="color: #4CAF50;">N: RM<?= number_format($product['PROD_NETPRICE'], 2); ?></small></td>
-                    <td><?= $product['PROD_BRAND']; ?></td>
-                    <td><?= $product['PROD_CATEGORY']; ?></td>
-                    <td><?php if ($product['PROD_CATEGORY'] == 'Food'): ?><strong><?= $product['FOOD_CATEGORY']; ?></strong><br><small>Exp: <?= $product['EXPIRY_DATE']; ?></small><?php else: ?><strong><?= $product['NONFOOD_CATEGORY'] ?: 'General'; ?></strong><?php endif; ?></td>
-                    <td><div style="display:flex; gap:10px;"><button class="btn-edit" onclick="openEditProductModal('<?= $product['PROD_ID']; ?>', '<?= addslashes($product['PROD_NAME']); ?>', '<?= $product['PROD_LISTPRICE']; ?>', '<?= $product['PROD_CATEGORY']; ?>')">Edit</button><button class="btn-delete" onclick="confirmDelete('<?= $product['PROD_ID']; ?>')">Delete</button></div></td>
+                    <td><?= $p['PROD_ID'] ?></td>
+                    <td><strong><?= $p['PROD_NAME'] ?></strong></td>
+                    <td>RM <?= number_format($p['PROD_LISTPRICE'], 2) ?></td>
+                    <td><?= $p['PROD_BRAND'] ?></td>
+                    <td><?= $p['PROD_CATEGORY'] ?></td>
+                    <td>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-edit" onclick="openEditProductModal('<?= $p['PROD_ID'] ?>', '<?= addslashes($p['PROD_NAME']) ?>', '<?= $p['PROD_LISTPRICE'] ?>', '<?= $p['PROD_CATEGORY'] ?>')">Edit</button>
+                            <button class="btn-delete" onclick="confirmDelete('<?= $p['PROD_ID'] ?>')">Delete</button>
+                        </div>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -209,29 +232,41 @@ include 'sidebar.php';
 
     <div id="expiry-view" class="table-container" style="display:none;">
         <table>
+            <thead><tr><th>ID</th><th>Product Name</th><th>Expiry Date</th><th>Branch</th><th>Stock</th></tr></thead>
+            <tbody>
+                <?php foreach($expiryAlerts as $a): ?>
+                <tr>
+                    <td><?= $a['PROD_ID'] ?></td>
+                    <td><?= $a['PROD_NAME'] ?></td>
+                    <td style="color:red; font-weight:bold;"><?= $a['EXPIRY_DATE'] ?></td>
+                    <td><?= $a['BRANCH_NAME'] ?></td>
+                    <td><?= $a['STOCK_QUANTITY'] ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="perf-view" class="table-container" style="display:none;">
+        <table>
             <thead>
                 <tr>
-                    <th>PROD_ID</th>
-                    <th>PROD_NAME</th>
-                    <th>EXPIRY_DATE</th>
-                    <th>BRANCH_NAME</th>
-                    <th>STOCK_QUANTITY</th>
-                    <th>ALERT_LEVEL</th>
-                </tr>
-            </thead>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Units Sold</th>
+                    <th>Unit Price</th>
+                    <th>Total Revenue</th>
+                    <th>Supplier</th></tr>
+                </thead>
             <tbody>
-                <?php foreach ($expiryAlerts as $alert) : ?>
-                <tr class="expiry-row" data-branch="<?= $alert['BRANCH_NAME']; ?>" data-status="<?= $alert['ALERT_LEVEL']; ?>">
-                    <td><?= $alert['PROD_ID']; ?></td>
-                    <td><strong><?= $alert['PROD_NAME']; ?></strong></td>
-                    <td style="color:#f44336; font-weight:bold;"><?= $alert['EXPIRY_DATE']; ?></td>
-                    <td><?= $alert['BRANCH_NAME']; ?></td>
-                    <td><?= $alert['STOCK_QUANTITY']; ?></td>
-                    <td>
-                        <span style="padding:4px 8px; border-radius:4px; font-weight:600; font-size:0.8em; background: <?= ($alert['ALERT_LEVEL'] == 'URGENT') ? '#f44336' : '#ffa000'; ?>; color:white;">
-                            <?= $alert['ALERT_LEVEL']; ?>
-                        </span>
-                    </td>
+                <?php foreach ($performanceData as $row) : ?>
+                <tr>
+                    <td><strong><?= $row['PROD_NAME'] ?></strong></td>
+                    <td><?= $row['PROD_CATEGORY'] ?></td>
+                    <td><?= $row['UNITS_SOLD'] ?></td>
+                    <td style="color: #7d5a5a;">RM <?= number_format($row['PROD_LISTPRICE'], 2) ?></td>
+                    <td style="color:#2e7d32; font-weight:bold;">RM <?= $row['TOTAL REVENUE'] ?></td>
+                    <td><?= $row['SUPPLIER'] ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -239,61 +274,8 @@ include 'sidebar.php';
     </div>
 </div>
 
-<div id="addProductModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header"><h2>Add New Product</h2><span class="close" onclick="closeModal()">&times;</span></div>
-        <div class="modal-body">
-            <form action="add_product.php" method="post">
-                <label>Product Name</label><input type="text" name="prodName" required>
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;"><label>List Price</label><input type="number" step="0.01" name="prodListPrice" required></div>
-                    <div style="flex: 1;"><label>Net Price</label><input type="number" step="0.01" name="prodNetPrice" required></div>
-                </div>
-                <label>Brand</label><input type="text" name="prodBrand" required>
-                <label>Category</label>
-                <select name="prodCategory" id="prodCategory" onchange="toggleFields()" style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-                    <option value="Food">Food</option><option value="Non-Food">Non-Food</option>
-                </select>
-
-                <!-- Food Product Fields (Visible if "Food" is selected) -->
-                <div id="foodFields" style="display: none;">
-                    <label>Food Type</label>
-                    <select name="foodType">
-                        <option value="Fruit">Fruit</option>
-                        <option value="Vegetable">Vegetable</option>
-                        <option value="Meat">Meat</option>
-                        <option value="Drink">Drink</option>
-                        <option value="Snacks">Snacks</option>
-
-                    </select>
-
-                    <label>Expiry Date</label>
-                    <input type="date" name="expiryDate">
-
-                    <label>Storage Instructions</label>
-                    <input type="text" name="storageInstructions">
-                </div>
-                <div id="nonFoodFields" style="display:none;"><label>Non-Food Category</label><input type="text" name="nonFoodCategory"></div>
-                <button type="submit" class="btn-add" style="width:100%">Save Product</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div id="editProductModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header"><h2>Edit Product</h2><span class="close" onclick="closeModal()">&times;</span></div>
-        <div class="modal-body">
-            <form action="edit_product.php" method="post">
-                <input type="hidden" id="editProd_ID" name="prodID">
-                <label>Product Name</label><input type="text" id="editProd_Name" name="prodName" required>
-                <label>List Price (RM)</label><input type="number" step="0.01" id="editProd_ListPrice" name="prodListPrice" required>
-                <label>Category</label><input type="text" id="editProd_Category" name="prodCategory" readonly style="background:#f9f9f9; color:#888;">
-                <button type="submit" class="btn-edit" style="width:100%; margin-top:10px;">Update Product</button>
-            </form>
-        </div>
-    </div>
-</div>
+<div id="addProductModal" class="modal"><div class="modal-content">...</div></div>
+<div id="editProductModal" class="modal"><div class="modal-content">...</div></div>
 
 </body>
 </html>

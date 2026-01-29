@@ -3,7 +3,7 @@
 include 'db_connection.php';
 
 // Fetch supplier data from the database
-$query =    "SELECT SUPP_ID, SUPP_NAME, SUPP_PHONE, SUPP_COMPANY, SUPP_EMAIL, SUPP_ADDRESS
+$query =    "SELECT SUPP_ID, SUPP_NAME, SUPP_PHONE, SUPP_BRAND, SUPP_EMAIL, SUPP_ADDRESS
             FROM SUPPLIER";
     
 $stid = oci_parse($conn, $query);

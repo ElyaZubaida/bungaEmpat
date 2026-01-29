@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </form>
 
     <div style="margin-top:20px; font-size:13px;">
-        Already a staff? <a href="login.php" style="color:var(--pink-dark); text-decoration:none; font-weight:700;">Login here!</a>
+        Already a staff? <a href="index.php" style="color:var(--pink-dark); text-decoration:none; font-weight:700;">Login here!</a>
     </div>
 </div>
 
