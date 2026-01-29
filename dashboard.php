@@ -1,5 +1,8 @@
 <?php
 include 'db_connection.php';
+include 'sidebar.php';
+
+// --- BAHAGIAN 1: PHP QUERIES (Kira Data Sebenar) ---
 
 $startDate = date('Y-m-01'); 
 $endDate   = date('Y-m-d');
@@ -137,6 +140,11 @@ include 'sidebar.php';
                     </table>
                 </div>
             </div>
+
+        </div>
+        
+        <div style="margin-top: 40px; text-align: center; color: #bfa2a2;">
+            <p>Select a card above to manage data ✨</p>
         </div>
     </div> 
 </div>

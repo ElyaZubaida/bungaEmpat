@@ -65,12 +65,13 @@ include 'sidebar.php';
 <body>
 
 <div class="main-content">
-    <div class="dashboard-header">
-        <div>
-            <h1>Stock Management</h1>
-        </div>
-        <button class="btn-add" onclick="openAddStockModal()">+ Add New Stock</button>
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div class="header-title">
+        <h1 style="margin: 0;">Stock Management</h1>
+        <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Manage and monitor your inventory levels</p>
     </div>
+    <button class="btn-add" onclick="openAddStockModal()">+ Add New Stock</button>
+</div>
 
     <div class="section-divider"></div>
 

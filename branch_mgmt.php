@@ -49,10 +49,13 @@ include 'sidebar.php';
 <body>
 
 <div class="main-content">
-    <div class="dashboard-header">
-        <h1>Branch Management</h1>
-        <button class="btn-add" onclick="openAddBranchModal()">+ Add New Branch</button>
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div>
+        <h1 style="margin: 0;">Branch Management</h1>
+        <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Oversee and manage your outlet locations</p>
     </div>
+    <button class="btn-add" onclick="openAddBranchModal()">+ Add New Branch</button>
+</div>
 
     <div class="section-divider"></div>
 

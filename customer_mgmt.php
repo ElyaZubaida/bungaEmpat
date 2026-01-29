@@ -10,7 +10,7 @@ $countStid = oci_parse($conn, $countQuery);
 oci_execute($countStid);
 $counts = oci_fetch_assoc($countStid);
 
-// --- 5. DINA COMPLEX QUERY ---
+// --- DINA COMPLEX QUERY ---
 // Identifies the top spender for every individual branch
 $queryChampions = "SELECT 
                     b.Branch_Name AS CAWANGAN, 
@@ -32,7 +32,7 @@ $queryChampions = "SELECT
                   )
                   ORDER BY b.Branch_Name";
 
-// --- 3. STANDARD CUSTOMER DISPLAY ---
+// --- STANDARD CUSTOMER DISPLAY ---
 $queryStandard = "SELECT CUST_ID, CUST_NAME, CUST_EMAIL, CUST_PHONE, CUST_LOYALTYPOINTS, CUST_DATEREGISTERED 
                   FROM CUSTOMER ORDER BY CUST_ID ASC";
 
@@ -213,7 +213,7 @@ include 'sidebar.php';
                 <label>Phone</label><input type="text" name="custPhone" required>
                 <label>Initial Loyalty Points</label><input type="number" name="custLoyaltyPoints" value="0">
                 <label>Registration Date</label><input type="date" name="custDateRegistered" required>
-                <button type="submit" class="btn-add" style="width:100%">Add Customer</button>
+                <button type="submit" class="btn-add">Add Customer</button>
             </form>
         </div>
     </div>
