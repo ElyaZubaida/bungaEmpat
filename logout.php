@@ -107,7 +107,7 @@ session_destroy();
         }
     </style>
     
-    <meta http-equiv="refresh" content="3;url=login.php">
+    <meta http-equiv="refresh" content="3;url=index.php">
 </head>
 <body>
 
@@ -119,7 +119,7 @@ session_destroy();
     <div class="loader"></div>
     <p style="font-size: 12px;">Redirecting you to login page...</p>
     
-    <a href="login.php" class="back-link">Click here if you aren't redirected</a>
+    <a href="index.php" class="back-link">Click here if you aren't redirected</a>
 </div>
 
 </body>

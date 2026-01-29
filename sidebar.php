@@ -7,7 +7,7 @@
 
 <div class="sidebar">
     <div class="logo-container">
-        <img src="img/logo.png" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;" onerror="this.onerror=null; this.src='default_logo.png';">
+        <img src="img/logo.png" alt="Logo" style="width: 150px; height: 150px; object-fit: contain;" onerror="this.onerror=null; this.src='default_logo.png';">
     </div>
     
     <h2>Bunga Empat Co.</h2>
