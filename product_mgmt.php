@@ -254,10 +254,24 @@ include 'sidebar.php';
                 <select name="prodCategory" id="prodCategory" onchange="toggleFields()" style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
                     <option value="Food">Food</option><option value="Non-Food">Non-Food</option>
                 </select>
-                <div id="foodFields">
-                    <label>Expiry Date</label><input type="date" name="expiryDate">
-                    <label>Storage</label><input type="text" name="storageInstructions">
-                    <label>Food Type</label><input type="text" name="foodType" placeholder="e.g., Bakery">
+
+                <!-- Food Product Fields (Visible if "Food" is selected) -->
+                <div id="foodFields" style="display: none;">
+                    <label>Food Type</label>
+                    <select name="foodType">
+                        <option value="Fruit">Fruit</option>
+                        <option value="Vegetable">Vegetable</option>
+                        <option value="Meat">Meat</option>
+                        <option value="Drink">Drink</option>
+                        <option value="Snacks">Snacks</option>
+
+                    </select>
+
+                    <label>Expiry Date</label>
+                    <input type="date" name="expiryDate">
+
+                    <label>Storage Instructions</label>
+                    <input type="text" name="storageInstructions">
                 </div>
                 <div id="nonFoodFields" style="display:none;"><label>Non-Food Category</label><input type="text" name="nonFoodCategory"></div>
                 <button type="submit" class="btn-add" style="width:100%">Save Product</button>
