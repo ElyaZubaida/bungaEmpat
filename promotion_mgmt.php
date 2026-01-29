@@ -1,13 +1,23 @@
 <?php
 include 'db_connection.php';
 
-$query = "SELECT PROMO_ID, PROMO_NAME, PROMO_DESC, TO_CHAR(PROMO_STARTDATE, 'DD/MM/YYYY') AS START_DATE, TO_CHAR(PROMO_ENDDATE, 'DD/MM/YYYY') AS END_DATE, PROMO_AMOUNT FROM PROMOTION";
+// Fetch Promotions with formatted dates
+$query = "SELECT PROMO_ID, PROMO_NAME, PROMO_DESC, 
+                 TO_CHAR(PROMO_STARTDATE, 'DD/MM/YYYY') AS START_DATE, 
+                 TO_CHAR(PROMO_ENDDATE, 'DD/MM/YYYY') AS END_DATE, 
+                 PROMO_AMOUNT 
+          FROM PROMOTION 
+          ORDER BY PROMO_ID ASC";
+
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
 $promotions = [];
+$total_discount = 0;
+
 while ($row = oci_fetch_assoc($stid)) {
     $promotions[] = $row;
+    $total_discount += $row['PROMO_AMOUNT'];
 }
 
 oci_free_statement($stid);
@@ -15,22 +25,21 @@ oci_close($conn);
 
 include 'sidebar.php';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Promotion Management</title>
+    <title>Promotion Management | Bunga Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-
     <script>
-        function openAddPromotionModal() {
-            document.getElementById("addPromotionModal").style.display = "block";
+        function openAddPromotionModal() { 
+            document.getElementById("addPromotionModal").style.display = "flex"; 
         }
 
         function openEditPromotionModal(id, name, description, startDate, endDate, amount) {
-            document.getElementById("editPromotionModal").style.display = "block";
-
+            document.getElementById("editPromotionModal").style.display = "flex";
             document.getElementById("editPromo_ID").value = id;
             document.getElementById("editPromo_Name").value = name;
             document.getElementById("editPromo_Desc").value = description;
@@ -39,129 +48,149 @@ include 'sidebar.php';
             document.getElementById("editPromo_Amount").value = amount;
         }
 
-        function confirmDelete(promoID) {
-            if (confirm("Are you sure you want to delete this promotion?")) {
-                window.location.href = 'delete_promotion.php?promo_id=' + promoID;
-            }
-        }
-
         function closeModal() {
             document.getElementById("addPromotionModal").style.display = "none";
             document.getElementById("editPromotionModal").style.display = "none";
         }
+
+        window.onclick = function(event) { if (event.target.className === 'modal') closeModal(); }
+
+        function confirmDelete(promoID) {
+            if (confirm("Permanently delete promotion " + promoID + "?")) {
+                window.location.href = 'delete_promotion.php?promo_id=' + promoID;
+            }
+        }
     </script>
 </head>
-
 <body>
-<div class="container">
-    <div class="main-content">
-        <h1>Promotion Management</h1>
 
-        <div class="button-container">
-            <div class="addbutton">
-                <button class="add-button" onclick="openAddPromotionModal()">Add</button>
-            </div>
+<div class="main-content">
+    <div class="dashboard-header">
+        <div>
+            <h1>Promotion Management</h1>
         </div>
+        <button class="btn-add" onclick="openAddPromotionModal()">+ Add Promotion</button>
+    </div>
 
-        <table id="promotionTable">
-            <tr>
-                <th>ID</th>
-                <th>Promotion Name</th>
-                <th>Description</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Amount</th>
-                <th>Action</th>
-            </tr>
+    <div class="section-divider"></div>
 
-            <?php foreach ($promotions as $promo) : ?>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Promotions</h3>
+            <span class="stat-number"><?= count($promotions); ?></span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
                 <tr>
-                    <td><?= $promo['PROMO_ID']; ?></td>
-                    <td><?= $promo['PROMO_NAME']; ?></td>
-                    <td><?= $promo['PROMO_DESC']; ?></td>
-                    <td><?= $promo['START_DATE']; ?></td>
-                    <td><?= $promo['END_DATE']; ?></td>
-                    <td><?= $promo['PROMO_AMOUNT']; ?></td>
-
+                    <th>ID</th>
+                    <th>Promotion Name</th>
+                    <th>Description</th>
+                    <th>Duration</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($promotions as $promo) : ?>
+                <tr>
+                    <td style="font-weight:600; color:#888;"><?= $promo['PROMO_ID']; ?></td>
+                    <td><strong><?= $promo['PROMO_NAME']; ?></strong></td>
+                    <td style="max-width: 250px; color: #666; font-size: 0.85em;"><?= $promo['PROMO_DESC']; ?></td>
                     <td>
-                        <button 
-                            class="edit"
-                            onclick="openEditPromotionModal(
+                        <small style="display:block;">Start: <?= $promo['START_DATE']; ?></small>
+                        <small style="display:block;">End: <?= $promo['END_DATE']; ?></small>
+                    </td>
+                    <td style="font-weight:600; color: #f44336;">RM <?= number_format($promo['PROMO_AMOUNT'], 2); ?></td>
+                    <td>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-edit" onclick="openEditPromotionModal(
                                 '<?= $promo['PROMO_ID']; ?>',
-                                '<?= $promo['PROMO_NAME']; ?>',
-                                '<?= $promo['PROMO_DESC']; ?>',
+                                '<?= addslashes($promo['PROMO_NAME']); ?>',
+                                '<?= addslashes($promo['PROMO_DESC']); ?>',
                                 '<?= $promo['START_DATE']; ?>',
                                 '<?= $promo['END_DATE']; ?>',
                                 '<?= $promo['PROMO_AMOUNT']; ?>'
-                            )">
-                            Edit
-                        </button>
-
-                        <button class="delete" onclick="confirmDelete('<?= $promo['PROMO_ID']; ?>')">
-                            Delete
-                        </button>
+                            )">Edit</button>
+                            <button class="btn-delete" onclick="confirmDelete('<?= $promo['PROMO_ID']; ?>')">Delete</button>
+                        </div>
                     </td>
                 </tr>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </tbody>
         </table>
     </div>
 </div>
 
-<!-- Add Promotion Modal -->
 <div id="addPromotionModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <div class="modal-header">
+            <h2>Create New Promotion</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form action="add_promotion.php" method="post">
+                <label>Promotion Name</label>
+                <input type="text" name="promoName" required placeholder="e.g. Lunar New Year Sale">
 
-        <h2>Add Promotion</h2>
+                <label>Description</label>
+                <input type="text" name="promoDesc" required placeholder="Brief campaign details">
 
-        <form action="add_promotion.php" method="post">
-            <label>Promotion Name</label>
-            <input type="text" name="promoName" required>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Start Date</label>
+                        <input type="text" name="startDate" placeholder="DD/MM/YYYY" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>End Date</label>
+                        <input type="text" name="endDate" placeholder="DD/MM/YYYY" required>
+                    </div>
+                </div>
 
-            <label>Description</label>
-            <input type="text" name="promoDesc" required>
+                <label>Discount Amount (RM)</label>
+                <input type="number" step="0.01" name="promoAmount" required>
 
-            <label>Start Date</label>
-            <input type="text" name="startDate" placeholder="DD/MM/YYYY" required>
-
-            <label>End Date</label>
-            <input type="text" name="endDate" placeholder="DD/MM/YYYY" required>
-
-            <label>Amount</label>
-            <input type="number" name="promoAmount" required>
-
-            <button type="submit" class="add-button">Add</button>
-        </form>
+                <button type="submit" class="btn-add" style="width:100%">Publish Promotion</button>
+            </form>
+        </div>
     </div>
 </div>
 
-<!-- Edit Promotion Modal -->
 <div id="editPromotionModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <div class="modal-header">
+            <h2>Edit Promotion</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form action="edit_promotion.php" method="post">
+                <input type="hidden" id="editPromo_ID" name="promoID">
 
-        <h2>Edit Promotion</h2>
+                <label>Promotion Name</label>
+                <input type="text" id="editPromo_Name" name="promoName" required>
 
-        <form action="edit_promotion.php" method="post">
-            <input type="hidden" id="editPromo_ID" name="promoID">
+                <label>Description</label>
+                <input type="text" id="editPromo_Desc" name="promoDesc" required>
 
-            <label>Promotion Name</label>
-            <input type="text" id="editPromo_Name" name="promoName" required>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Start Date</label>
+                        <input type="text" id="editStart_Date" name="startDate" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>End Date</label>
+                        <input type="text" id="editEnd_Date" name="endDate" required>
+                    </div>
+                </div>
 
-            <label>Description</label>
-            <input type="text" id="editPromo_Desc" name="promoDesc" required>
+                <label>Discount Amount (RM)</label>
+                <input type="number" step="0.01" id="editPromo_Amount" name="promoAmount" required>
 
-            <label>Start Date</label>
-            <input type="date" id="editStart_Date" name="startDate" required>
-
-            <label>End Date</label>
-            <input type="date" id="editEnd_Date" name="endDate" required>
-
-            <label>Amount</label>
-            <input type="number" id="editPromo_Amount" name="promoAmount" required>
-
-            <button type="submit" class="add-button">Update</button>
-        </form>
+                <button type="submit" class="btn-edit" style="width:100%">Save Changes</button>
+            </form>
+        </div>
     </div>
 </div>
 

@@ -1,15 +1,22 @@
 <?php
 include 'db_connection.php';
 
-$query = "
-    SELECT s.STOCK_ID, s.PROD_ID, s.BRANCH_ID, s.STAFF_ID, s.STOCK_QUANTITY, s.STOCK_IN, s.STOCK_OUT
-    FROM STOCK s";
+// Fetch all stock data
+$query = "SELECT STOCK_ID, PROD_ID, BRANCH_ID, STAFF_ID, STOCK_QUANTITY, STOCK_IN, STOCK_OUT FROM STOCK ORDER BY STOCK_ID ASC";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
 $stocks = [];
+$total_qty = 0;
+$total_in = 0;
+$total_out = 0;
+
 while ($row = oci_fetch_assoc($stid)) {
     $stocks[] = $row;
+    // Calculate totals for the cards
+    $total_qty += $row['STOCK_QUANTITY'];
+    $total_in += $row['STOCK_IN'];
+    $total_out += $row['STOCK_OUT'];
 }
 
 oci_free_statement($stid);
@@ -22,73 +29,93 @@ include 'sidebar.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stock Management</title>
+    <title>Stock Management | Bunga Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script>
-        // Open the Add Stock modal
-        function openAddStockModal() {
-            document.getElementById("addStockModal").style.display = "block";
+        function openAddStockModal() { 
+            document.getElementById("addStockModal").style.display = "flex"; 
         }
 
-        // Open the Edit Stock modal and populate data
-        function openEditStockModal(stockID, prodID, branchID, staffID, quantity, stockIn, stockOut) {
-            document.getElementById("editStockModal").style.display = "block";
-            document.getElementById("editStock_ID").value = stockID;
-            document.getElementById("editProd_ID").value = prodID;
-            document.getElementById("editBranch_ID").value = branchID;
-            document.getElementById("editStaff_ID").value = staffID;
-            document.getElementById("editStock_Quantity").value = quantity;
-            document.getElementById("editStock_In").value = stockIn;
-            document.getElementById("editStock_Out").value = stockOut;
+        function openEditStockModal(id, prod, branch, staff, qty, s_in, s_out) {
+            document.getElementById("editStockModal").style.display = "flex";
+            document.getElementById("editStock_ID").value = id;
+            document.getElementById("editProd_ID").value = prod;
+            document.getElementById("editBranch_ID").value = branch;
+            document.getElementById("editStaff_ID").value = staff;
+            document.getElementById("editStock_Quantity").value = qty;
+            document.getElementById("editStock_In").value = s_in;
+            document.getElementById("editStock_Out").value = s_out;
         }
 
-        // Confirm Delete Stock
-        function confirmDelete(stockID) {
-            const confirmation = confirm("Are you sure you want to delete this stock entry?");
-            if (confirmation) {
-                // Redirect to the delete_stock.php page
-                window.location.href = 'delete_stock.php?stock_id=' + stockID;
-            }
-        }
-
-        // Close the modal
         function closeModal() {
             document.getElementById("addStockModal").style.display = "none";
             document.getElementById("editStockModal").style.display = "none";
         }
+
+        window.onclick = function(event) { if (event.target.className === 'modal') closeModal(); }
+
+        function confirmDelete(stockID) {
+            if (confirm("Permanently delete stock record " + stockID + "?")) {
+                window.location.href = 'delete_stock.php?stock_id=' + stockID;
+            }
+        }
     </script>
 </head>
 <body>
-    <div class="container">
-        <div class="main-content">
+
+<div class="main-content">
+    <div class="dashboard-header">
+        <div>
             <h1>Stock Management</h1>
-            <div class="button-container">
-                <div class="addbutton">
-                    <button class="add-button" onclick="openAddStockModal()">Add</button>
-                </div>
-            </div>
-            <table id="stockTable">
+        </div>
+        <button class="btn-add" onclick="openAddStockModal()">+ Add New Stock</button>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Items in Stock</h3>
+            <span class="stat-number"><?= $total_qty; ?></span>
+        </div>
+        <div class="stat-card" style="border-left-color: #4CAF50;">
+            <h3>Total Stock In</h3>
+            <span class="stat-number" style="color: #4CAF50;"><?= $total_in; ?></span>
+        </div>
+        <div class="stat-card" style="border-left-color: #f44336;">
+            <h3>Total Stock Out</h3>
+            <span class="stat-number" style="color: #f44336;"><?= $total_out; ?></span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
                 <tr>
                     <th>Stock ID</th>
                     <th>Product ID</th>
                     <th>Branch ID</th>
                     <th>Staff ID</th>
-                    <th>Stock Quantity</th>
+                    <th>Quantity</th>
                     <th>Stock In</th>
                     <th>Stock Out</th>
                     <th>Action</th>
                 </tr>
+            </thead>
+            <tbody>
                 <?php foreach ($stocks as $stockItem) : ?>
-                    <tr>
-                        <td><?= $stockItem['STOCK_ID']; ?></td>
-                        <td><?= $stockItem['PROD_ID']; ?></td>
-                        <td><?= $stockItem['BRANCH_ID']; ?></td>
-                        <td><?= $stockItem['STAFF_ID']; ?></td>
-                        <td><?= $stockItem['STOCK_QUANTITY']; ?></td>
-                        <td><?= $stockItem['STOCK_IN']; ?></td>
-                        <td><?= $stockItem['STOCK_OUT']; ?></td>
-                        <td>
-                            <button onclick="openEditStockModal(
+                <tr>
+                    <td style="font-weight:600; color:#888;"><?= $stockItem['STOCK_ID']; ?></td>
+                    <td><?= $stockItem['PROD_ID']; ?></td>
+                    <td><?= $stockItem['BRANCH_ID']; ?></td>
+                    <td><?= $stockItem['STAFF_ID']; ?></td>
+                    <td style="font-weight:600;"><?= $stockItem['STOCK_QUANTITY']; ?></td>
+                    <td style="color:#4CAF50;">+ <?= $stockItem['STOCK_IN']; ?></td>
+                    <td style="color:#f44336;">- <?= $stockItem['STOCK_OUT']; ?></td>
+                    <td>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-edit" onclick="openEditStockModal(
                                 '<?= $stockItem['STOCK_ID']; ?>',
                                 '<?= $stockItem['PROD_ID']; ?>',
                                 '<?= $stockItem['BRANCH_ID']; ?>',
@@ -96,73 +123,87 @@ include 'sidebar.php';
                                 '<?= $stockItem['STOCK_QUANTITY']; ?>',
                                 '<?= $stockItem['STOCK_IN']; ?>',
                                 '<?= $stockItem['STOCK_OUT']; ?>'
-                            )" class="edit">Edit</button>
-                            <button onclick="confirmDelete('<?= $stockItem['STOCK_ID']; ?>')" class="delete">Delete</button>
-                        </td>
-                    </tr>
+                            )">Edit</button>
+                            <button class="btn-delete" onclick="confirmDelete('<?= $stockItem['STOCK_ID']; ?>')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
                 <?php endforeach; ?>
-            </table>
-        </div>
+            </tbody>
+        </table>
     </div>
+</div>
 
-    <!-- Add Stock Modal -->
-    <div id="addStockModal" class="modal">
-        <div class="modal-content">
+<div id="addStockModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Stock Entry</h2>
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Add Stock</h2>
+        </div>
+        <div class="modal-body">
             <form action="add_stock.php" method="post">
-                <label for="prodID">Product ID</label>
-                <input type="text" id="prodID" name="prodID" required>
+                <label>Product ID</label>
+                <input type="text" name="prodID" placeholder="e.g. P101" required>
 
-                <label for="branchID">Branch ID</label>
-                <input type="text" id="branchID" name="branchID" required>
+                <label>Branch ID</label>
+                <input type="text" name="branchID" placeholder="e.g. B101" required>
 
-                <label for="staffID">Staff ID</label>
-                <input type="text" id="staffID" name="staffID" required>
+                <label>Staff ID</label>
+                <input type="text" name="staffID" placeholder="e.g. S101" required>
 
-                <label for="stockQuantity">Stock Quantity</label>
-                <input type="number" id="stockQuantity" name="stockQuantity" required>
+                <label>Initial Quantity</label>
+                <input type="number" name="stockQuantity" required>
 
-                <label for="stockIn">Stock In</label>
-                <input type="number" id="stockIn" name="stockIn" required>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Stock In</label>
+                        <input type="number" name="stockIn" value="0">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Stock Out</label>
+                        <input type="number" name="stockOut" value="0">
+                    </div>
+                </div>
 
-                <label for="stockOut">Stock Out</label>
-                <input type="number" id="stockOut" name="stockOut" required>
-
-                <button type="submit" class="add-button">Add Stock</button>
+                <button type="submit" class="btn-add" style="width: 100%; margin-top: 10px;">Save Stock</button>
             </form>
         </div>
     </div>
+</div>
 
-    <!-- Edit Stock Modal -->
-    <div id="editStockModal" class="modal">
-        <div class="modal-content">
+<div id="editStockModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Stock Record</h2>
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Edit Stock</h2>
+        </div>
+        <div class="modal-body">
             <form action="edit_stock.php" method="post">
                 <input type="hidden" id="editStock_ID" name="stockID">
-
-                <label for="editProd_ID">Product ID</label>
+                
+                <label>Product ID</label>
                 <input type="text" id="editProd_ID" name="prodID" required>
 
-                <label for="editBranch_ID">Branch ID</label>
+                <label>Branch ID</label>
                 <input type="text" id="editBranch_ID" name="branchID" required>
 
-                <label for="editStaff_ID">Staff ID</label>
+                <label>Staff ID</label>
                 <input type="text" id="editStaff_ID" name="staffID" required>
 
-                <label for="editStock_Quantity">Stock Quantity</label>
+                <label>Quantity</label>
                 <input type="number" id="editStock_Quantity" name="stockQuantity" required>
 
-                <label for="editStock_In">Stock In</label>
-                <input type="number" id="editStock_In" name="stockIn" required>
+                <label>Stock In</label>
+                <input type="number" id="editStock_In" name="stockIn">
 
-                <label for="editStock_Out">Stock Out</label>
-                <input type="number" id="editStock_Out" name="stockOut" required>
+                <label>Stock Out</label>
+                <input type="number" id="editStock_Out" name="stockOut">
 
-                <button type="submit" class="add-button">Update Stock</button>
+                <button type="submit" class="btn-edit" style="width: 100%; margin-top: 10px;">Update Record</button>
             </form>
         </div>
     </div>
+</div>
+
 </body>
 </html>

@@ -21,7 +21,9 @@ oci_execute($promo_stid);
 $promotions = [];
 while ($row = oci_fetch_assoc($promo_stid)) { $promotions[] = $row; }
 
-$query = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_AMOUNT, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, s.CUST_ID, s.STAFF_ID, s.PROMO_ID, ps.PS_QUANTITY, ps.PS_SUBPRICE
+// Fetch Sales with Product Details
+$query = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_AMOUNT, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, 
+                 s.CUST_ID, s.STAFF_ID, s.PROMO_ID, ps.PS_QUANTITY, ps.PS_SUBPRICE
           FROM SALE s
           JOIN PRODUCT_SALE ps ON s.SALE_ID = ps.SALE_ID
           ORDER BY s.SALE_ID";
@@ -30,8 +32,14 @@ $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
 $sales = [];
+$total_revenue = 0;
+$cash_sales = 0;
+$card_sales = 0;
+
 while ($row = oci_fetch_assoc($stid)) {
     $sales[] = $row;
+    $total_revenue += $row['SALE_GRANDAMOUNT'];
+    
 }
 
 oci_free_statement($stid);
@@ -44,8 +52,8 @@ include 'sidebar.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Management</title>
+    <title>Sales Management | Bunga Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script>
         function openAddSalesModal() {
@@ -59,99 +67,72 @@ include 'sidebar.php';
 
 </head>
 <body>
-    <div class="container">
-        <div class="main-content">
+
+<div class="main-content">
+    <div class="dashboard-header">
+        <div>
             <h1>Sales Management</h1>
-            <div class="button-container">
-                <div class="addbutton">
-                    <button class="add-button" onclick="openAddSalesModal()">Add</button>
-                </div>
-            </div>
-            <table id="salesTable">
+        </div>
+        <button class="btn-add" onclick="window.location.href='create_sale.php'">+ Create New Sale</button>
+    </div>
+
+    <div class="section-divider"></div>
+
+   <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Transactions</h3>
+            <span class="stat-number"><?= count($sales); ?></span>
+        </div>
+        <div class="stat-card" style="border-left-color: #4CAF50;">
+            <h3>Total Revenue</h3>
+            <span class="stat-number" style="color: #4CAF50;">RM <?= number_format($total_revenue, 2); ?></span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
                 <tr>
-                    <th>Sale ID</th>
-                    <th>Sale Date</th>
-                    <th>Sale Amount</th>
-                    <th>Sale Grand Amount</th>
-                    <th>Payment Type</th>
-                    <th>Quantity</th>
-                    <th>Sub Amount</th>
-                    <th>Customer ID</th>
-                    <th>Staff ID</th>
-                    <th>Promo ID</th>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Grand Total</th>
+                    <th>Payment</th>
+                    <th>Qty</th>
+                    <th>Sub Price</th>
+                    <th>Customer</th>
+                    <th>Staff</th>
+                    <th>Promo</th>
                 </tr>
-                <?php
-                // Iterate over the sales array and display data in the table
-                foreach ($sales as $sale) {
-                    echo "<tr>
-                            <td>" . $sale['SALE_ID'] . "</td>
-                            <td>" . $sale['SALE_DATE'] . "</td>
-                            <td>" . $sale['SALE_AMOUNT'] . "</td>
-                            <td>" . $sale['SALE_GRANDAMOUNT'] . "</td>
-                            <td>" . $sale['SALE_PAYMENTTYPE'] . "</td>
-                            <td>" . $sale['PS_QUANTITY'] . "</td>
-                            <td>" . $sale['PS_SUBPRICE'] . "</td>
-                            <td>" . $sale['CUST_ID'] . "</td>
-                            <td>" . $sale['STAFF_ID'] . "</td>
-                            <td>" . $sale['PROMO_ID'] . "</td>
-                        </tr>";
-                }
-                ?>
-            </table>
-        </div>
+            </thead>
+            <tbody>
+                <?php foreach ($sales as $sale) : ?>
+                <tr>
+                    <td style="font-weight:600; color:#888;"><?= $sale['SALE_ID']; ?></td>
+                    <td><?= $sale['SALE_DATE']; ?></td>
+                    <td>RM <?= number_format($sale['SALE_AMOUNT'], 2); ?></td>
+                    <td style="font-weight:600;">RM <?= number_format($sale['SALE_GRANDAMOUNT'], 2); ?></td>
+                    <td>
+                        <?php 
+                            // Dynamic Pill Colors based on Payment Type
+                            $payType = strtoupper($sale['SALE_PAYMENTTYPE']);
+                            $pillStyle = ($payType == 'CASH') ? 'background:#e8f5e9; color:#2e7d32;' : 'background:#e3f2fd; color:#1565c0;';
+                        ?>
+                        <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: 500; <?= $pillStyle; ?>">
+                            <?= $sale['SALE_PAYMENTTYPE']; ?>
+                        </span>
+                    </td>
+                    <td><?= $sale['PS_QUANTITY']; ?></td>
+                    <td>RM <?= number_format($sale['PS_SUBPRICE'], 2); ?></td>
+                    <td><?= $sale['CUST_ID'] ?: '-'; ?></td>
+                    <td><?= $sale['STAFF_ID']; ?></td>
+                    <td><?= $sale['PROMO_ID'] ?: 'None'; ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
-    <div id="addSalesModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Add New Sale</h2>
-            
-            <form action="add_sales.php" method="post">
+</div>
 
-                <label>Sale Date</label>
-                <input type="date" name="saleDate" placeholder="DD-MMM-YY" required>
-
-                <label>Sale Amount</label>      
-                <input type="number" step="0.01" name="saleAmount" required>
-
-                <label>Grand Total Amount</label>
-                <input type="number" step="0.01" name="saleGrandAmount" required>
-
-                <label>Payment Type</label>
-                <select name="salePaymentType" required>
-                    <option value="Cash">Cash</option>
-                    <option value="Credit Card">Credit Card</option>
-                    <option value="E-Wallet">E-Wallet</option>
-                </select>
-
-                <label>Customer</label>
-                <select name="custId">
-                    <option value="">-- Select Customer (Optional) --</option>
-                    <?php foreach ($customers as $c): ?>
-                        <option value="<?= $c['CUST_ID'] ?>"><?= $c['CUST_ID'] ?> - <?= $c['CUST_NAME'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-
-                <label>Staff Member</label>
-                <select name="staffId">
-                    <option value="">-- Select Staff --</option>
-                    <?php foreach ($staff_members as $s): ?>
-                        <option value="<?= $s['STAFF_ID'] ?>"><?= $s['STAFF_ID'] ?> - <?= $s['STAFF_NAME'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-
-                <label>Promotion</label>
-                <select name="promoId">
-                    <option value="">-- None --</option>
-                    <?php foreach ($promotions as $p): ?>
-                        <option value="<?= $p['PROMO_ID'] ?>"><?= $p['PROMO_ID'] ?> - <?= $p['PROMO_NAME'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-
-                <button type="submit" class="add-button">Add Sale Record</button>
-            </form>
-        </div>
-    </div>
-
-    
 </body>
 </html>

@@ -1,13 +1,21 @@
 <?php
 include 'db_connection.php';
 
-$query = "SELECT * FROM SUPPLIER_ORDER";
+// Fetch all supplier orders
+$query = "SELECT ORDER_ID, ORDER_DATE, ORDER_QUANTITY, EXPECTED_DELIVERY, ORDER_AMOUNT, SUPP_ID, STAFF_ID 
+          FROM SUPPLIER_ORDER 
+          ORDER BY ORDER_DATE DESC";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
 $supplier_orders = [];
+$total_cost = 0;
+$total_qty = 0;
+
 while ($row = oci_fetch_assoc($stid)) {
     $supplier_orders[] = $row;
+    $total_cost += $row['ORDER_AMOUNT'];
+    $total_qty += $row['ORDER_QUANTITY'];
 }
 
 oci_free_statement($stid);
@@ -20,75 +28,118 @@ include 'sidebar.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supplier Order Management</title>
+    <title>Supplier Order Management | Bunga Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script>
+        function openAddOrderModal() {
+            document.getElementById("addOrderModal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("addOrderModal").style.display = "none";
+        }
+
+        // Close modal if user clicks outside of the box
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') closeModal();
+        }
+    </script>
 </head>
 <body>
-<div class="container">
-    <div class="main-content">
-        <h1>Supplier Order Management</h1>
 
-        <div class="button-container">
-            <div class="addbutton">
-                <button class="add-button" onclick="openAddOrderModal()">New Order</button>
-            </div>
+<div class="main-content">
+    <div class="dashboard-header">
+        <div>
+            <h1>Supplier Order Management</h1>
         </div>
+        <button class="btn-add" onclick="openAddOrderModal()">+ New Order</button>
+    </div>
 
-        <table id="supplierOrderTable">
-            <tr>
-                <th>Order ID</th>
-                <th>Order Date</th>
-                <th>Order Quantity</th>
-                <th>Expected Delivery</th>
-                <th>Order Amount</th>
-                <th>Supplier ID</th>
-                <th>Staff ID</th>
-            </tr>
+    <div class="section-divider"></div>
 
-            <?php foreach ($supplier_orders as $order): ?>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Orders</h3>
+            <span class="stat-number"><?= count($supplier_orders); ?></span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
                 <tr>
-                    <td><?= $order['ORDER_ID']; ?></td>
+                    <th>Order ID</th>
+                    <th>Order Date</th>
+                    <th>Quantity</th>
+                    <th>Expected Delivery</th>
+                    <th>Amount</th>
+                    <th>Supplier ID</th>
+                    <th>Staff ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($supplier_orders as $order): ?>
+                <tr>
+                    <td style="font-weight:600; color:#888;"><?= $order['ORDER_ID']; ?></td>
                     <td><?= $order['ORDER_DATE']; ?></td>
-                    <td><?= $order['ORDER_QUANTITY']; ?></td>
-                    <td><?= $order['EXPECTED_DELIVERY']; ?></td>
-                    <td><?= $order['ORDER_AMOUNT']; ?></td>
+                    <td style="font-weight:600;"><?= $order['ORDER_QUANTITY']; ?></td>
+                    <td>
+                        <span style="background:#fff3e0; color:#e65100; padding: 4px 10px; border-radius: 4px; font-size: 0.85em; font-weight: 500;">
+                            <?= $order['EXPECTED_DELIVERY']; ?>
+                        </span>
+                    </td>
+                    <td style="font-weight:600; color:#f44336;">RM <?= number_format($order['ORDER_AMOUNT'], 2); ?></td>
                     <td><?= $order['SUPP_ID']; ?></td>
                     <td><?= $order['STAFF_ID']; ?></td>
                 </tr>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </tbody>
         </table>
     </div>
 </div>
 
-<!-- Add Order Modal -->
 <div id="addOrderModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h2>Add Supplier Order</h2>
+        <div class="modal-header">
+            <h2>Place New Supplier Order</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form action="add_supplier_order.php" method="post">
+                <label>Order ID</label>
+                <input type="text" name="orderID" placeholder="e.g. ORD7782" required>
 
-        <form action="add_supplier_order.php" method="post">
-            <label>Order ID</label>
-            <input type="text" name="orderID" required>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Order Quantity</label>
+                        <input type="number" name="orderQuantity" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Order Amount (RM)</label>
+                        <input type="number" step="0.01" name="orderAmount" required>
+                    </div>
+                </div>
 
-            <label>Order Quantity</label>
-            <input type="number" name="orderQuantity" required>
+                <label>Expected Delivery Date</label>
+                <input type="date" name="expectedDelivery" required>
 
-            <label>Expected Delivery</label>
-            <input type="date" name="expectedDelivery" required>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Supplier ID</label>
+                        <input type="text" name="suppID" placeholder="e.g. SUP101" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Staff ID (Purchaser)</label>
+                        <input type="text" name="staffID" placeholder="e.g. STF005" required>
+                    </div>
+                </div>
 
-            <label>Order Amount</label>
-            <input type="number" step="0.01" name="orderAmount" required>
-
-            <label>Supplier ID</label>
-            <input type="text" name="suppID" required>
-
-            <label>Staff ID</label>
-            <input type="text" name="staffID" required>
-
-            <button type="submit" class="add-button">Add Order</button>
-        </form>
+                <button type="submit" class="btn-add" style="width:100%; margin-top: 10px;">Confirm Procurement</button>
+            </form>
+        </div>
     </div>
 </div>
+
 </body>
 </html>
