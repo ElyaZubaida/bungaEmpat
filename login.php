@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (!oci_execute($stid)) {
             $e = oci_error($stid);
-            die("Ralat Pangkalan Data: " . $e['message']);
+            die("Database error: " . $e['message']);
         }
 
         $user = oci_fetch_assoc($stid);
@@ -37,10 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 header("Location: dashboard.php");
                 exit();
             } else {
-                $error_message = "Kata laluan salah.";
+                $error_message = "Sorry, wrong password.";
             }
         } else {
-            $error_message = "Nama pengguna tidak dijumpai.";
+            $error_message = "Username not found.";
         }
         oci_free_statement($stid);
     }
