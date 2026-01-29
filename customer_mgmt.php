@@ -1,9 +1,7 @@
 <?php
 include 'db_connection.php';
 
-// Fetch all customers and calculate totals for cards
-$query = "SELECT CUST_ID, CUST_NAME, CUST_EMAIL, CUST_PHONE, CUST_LOYALTYPOINTS, CUST_DATEREGISTERED 
-          FROM CUSTOMER ORDER BY CUST_ID ASC";
+$query = "SELECT * FROM CUSTOMER ORDER BY CUST_ID ASC";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
@@ -161,6 +159,15 @@ include 'sidebar.php';
 
                 <label>Name</label>
                 <input type="text" id="editCust_Name" name="custName" required>
+        <span class="close" onclick="closeModal()">&times;</span>
+
+        <h2>Edit Customer</h2>
+
+        <form action="edit_customer.php" method="post">
+            <input type="hidden" id="editCust_ID" name="custID" value="<?php echo $row['CUST_ID']; ?>">
+
+            <label>Name</label>
+            <input type="text" id="editCust_Name" name="custName" value="<?php echo $row['CUST_NAME']; ?>">
 
                 <label>Email</label>
                 <input type="email" id="editCust_Email" name="custEmail" required>

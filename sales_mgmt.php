@@ -1,12 +1,32 @@
 <?php
 include 'db_connection.php';
+// Fetch Customers
+$cust_query = "SELECT CUST_ID, CUST_NAME FROM CUSTOMER";
+$cust_stid = oci_parse($conn, $cust_query);
+oci_execute($cust_stid);
+$customers = [];
+while ($row = oci_fetch_assoc($cust_stid)) { $customers[] = $row; }
+
+// Fetch Staff
+$staff_query = "SELECT STAFF_ID, STAFF_NAME FROM STAFF";
+$staff_stid = oci_parse($conn, $staff_query);
+oci_execute($staff_stid);
+$staff_members = [];
+while ($row = oci_fetch_assoc($staff_stid)) { $staff_members[] = $row; }
+
+// Fetch Promotions
+$promo_query = "SELECT PROMO_ID, PROMO_NAME FROM PROMOTION";
+$promo_stid = oci_parse($conn, $promo_query);
+oci_execute($promo_stid);
+$promotions = [];
+while ($row = oci_fetch_assoc($promo_stid)) { $promotions[] = $row; }
 
 // Fetch Sales with Product Details
 $query = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_AMOUNT, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, 
                  s.CUST_ID, s.STAFF_ID, s.PROMO_ID, ps.PS_QUANTITY, ps.PS_SUBPRICE
           FROM SALE s
           JOIN PRODUCT_SALE ps ON s.SALE_ID = ps.SALE_ID
-          ORDER BY s.SALE_ID DESC";
+          ORDER BY s.SALE_ID";
 
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
@@ -35,6 +55,16 @@ include 'sidebar.php';
     <title>Sales Management | Bunga Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script>
+        function openAddSalesModal() {
+            document.getElementById("addSalesModal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("addSalesModal").style.display = "none";
+        }
+    </script>
+
 </head>
 <body>
 
