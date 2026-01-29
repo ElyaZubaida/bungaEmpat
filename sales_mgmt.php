@@ -69,9 +69,10 @@ include 'sidebar.php';
 <body>
 
 <div class="main-content">
-    <div class="dashboard-header">
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <div>
-            <h1>Sales Management</h1>
+            <h1 style="margin: 0;">Sales Management</h1>
+            <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Track and process customer transactions</p>
         </div>
         <button class="btn-add" onclick="window.location.href='create_sale.php'">+ Create New Sale</button>
     </div>

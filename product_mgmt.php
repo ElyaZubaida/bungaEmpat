@@ -128,9 +128,9 @@ include 'sidebar.php';
 </head>
 <body>
 
-<div class="main-content">
-    <div class="dashboard-header">
-        <h1>Product Management</h1>
+    <div class="main-content">
+        <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 style="margin: 0;">Product Management</h1>
         <button class="btn-add" onclick="openAddProductModal()">+ Add New Product</button>
     </div>
 

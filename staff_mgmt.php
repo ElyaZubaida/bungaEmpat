@@ -64,12 +64,13 @@ include 'sidebar.php';
 <body>
 
 <div class="main-content">
-    <div class="dashboard-header">
-        <div>
-            <h1>Staff Management</h1>
-        </div>
-        <button class="btn-add" onclick="openAddModal()">+ Add Staff</button>
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div>
+        <h1 style="margin: 0;">Staff Management</h1>
+        <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Manage your team members and roles</p>
     </div>
+    <button class="btn-add" onclick="openAddModal()">+ Add Staff</button>
+</div>
 
     <div class="section-divider"></div>
 

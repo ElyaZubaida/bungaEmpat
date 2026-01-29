@@ -3,8 +3,7 @@
 include 'db_connection.php';
 
 // Fetch supplier data from the database
-$query =    "SELECT SUPP_ID, SUPP_NAME, SUPP_PHONE, SUPP_COMPANY, SUPP_EMAIL, SUPP_ADDRESS
-            FROM SUPPLIER";
+$query = "SELECT SUPP_ID, SUPP_NAME, SUPP_PHONE, SUPP_COMPANY, SUPP_EMAIL, SUPP_ADDRESS FROM SUPPLIER";
     
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
@@ -35,12 +34,13 @@ include 'sidebar.php';
             document.getElementById("addSupplierModal").style.display = "flex";
         }
 
+        // PEMBETULAN: Menggunakan suppCompany dan ID input yang betul
         function openEditSupplierModal(suppID, suppName, suppPhone, suppCompany, suppEmail, suppAddress) {
             document.getElementById("editSupplierModal").style.display = "flex";
             document.getElementById("editSupp_ID").value = suppID;
             document.getElementById("editSupp_Name").value = suppName;
             document.getElementById("editSupp_Phone").value = suppPhone;
-            document.getElementById("editSupp_Brand").value = suppBrand;
+            document.getElementById("editSupp_Company").value = suppCompany; 
             document.getElementById("editSupp_Email").value = suppEmail;
             document.getElementById("editSupp_Address").value = suppAddress;
         }
@@ -56,7 +56,6 @@ include 'sidebar.php';
             document.getElementById("editSupplierModal").style.display = "none";
         }
 
-        // Close modal if user clicks outside of the box
         window.onclick = function(event) {
             if (event.target.className === 'modal') closeModal();
         }
@@ -65,9 +64,10 @@ include 'sidebar.php';
 <body>
 
 <div class="main-content">
-    <div class="dashboard-header">
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <div>
-            <h1>Supplier Management</h1>
+            <h1 style="margin: 0;">Supplier Management</h1>
+            <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Manage your vendor contacts and supply chain</p>
         </div>
         <button class="btn-add" onclick="openAddSupplierModal()">+ Add Supplier</button>
     </div>
@@ -104,8 +104,7 @@ include 'sidebar.php';
                     </td>
                     <td>
                         <span style="background:#f0f0f0; padding:4px 8px; border-radius:4px; font-size:0.85em;">
-                            <?= $supplier['SUPP_BRAND']; ?>
-                        </span>
+                            <?= $supplier['SUPP_COMPANY']; ?> </span>
                     </td>
                     <td style="max-width: 200px; font-size: 0.85em; color: #555;"><?= $supplier['SUPP_ADDRESS']; ?></td>
                     <td>
@@ -114,7 +113,7 @@ include 'sidebar.php';
                                 '<?= $supplier['SUPP_ID']; ?>',
                                 '<?= addslashes($supplier['SUPP_NAME']); ?>',
                                 '<?= $supplier['SUPP_PHONE']; ?>',
-                                '<?= addslashes($supplier['SUPP_BRAND']); ?>',
+                                '<?= addslashes($supplier['SUPP_COMPANY']); ?>',
                                 '<?= $supplier['SUPP_EMAIL']; ?>',
                                 '<?= addslashes($supplier['SUPP_ADDRESS']); ?>'
                             )">Edit</button>
@@ -138,7 +137,6 @@ include 'sidebar.php';
             <form action="add_supplier.php" method="post">
                 <label>Supplier Name</label>
                 <input type="text" name="suppName" required placeholder="Contact Person Name">
-
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Phone Number</label>
@@ -149,13 +147,10 @@ include 'sidebar.php';
                         <input type="email" name="suppEmail" required>
                     </div>
                 </div>
-
                 <label>Company / Brand Name</label>
                 <input type="text" name="suppCompany" required placeholder="Company Name">
-
                 <label>Office Address</label>
                 <textarea name="suppAddress" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px;"></textarea>
-
                 <button type="submit" class="btn-add" style="width:100%">Register Supplier</button>
             </form>
         </div>
@@ -171,10 +166,8 @@ include 'sidebar.php';
         <div class="modal-body">
             <form action="edit_supplier.php" method="post">
                 <input type="hidden" id="editSupp_ID" name="suppID">
-
                 <label>Supplier Name</label>
                 <input type="text" id="editSupp_Name" name="suppName" required>
-
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Phone</label>
@@ -185,13 +178,9 @@ include 'sidebar.php';
                         <input type="email" id="editSupp_Email" name="suppEmail" required>
                     </div>
                 </div>
-
                 <label>Company</label>
-                <input type="text" id="editSupp_Company" name="suppCompany" required>
-
-                <label>Address</label>
+                <input type="text" id="editSupp_Company" name="suppCompany" required> <label>Address</label>
                 <textarea id="editSupp_Address" name="suppAddress" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px;"></textarea>
-
                 <button type="submit" class="btn-edit" style="width:100%">Update Supplier</button>
             </form>
         </div>
