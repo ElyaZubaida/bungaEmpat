@@ -105,7 +105,7 @@ include 'sidebar.php';
                     </td>
                     <td>
                         <span style="background:#f0f0f0; padding:4px 8px; border-radius:4px; font-size:0.85em;">
-                            <?= $supplier['SUPP_COMPANY']; ?> </span>
+                            <?= $supplier['SUPP_BRAND']; ?> </span>
                     </td>
                     <td style="max-width: 200px; font-size: 0.85em; color: #555;"><?= $supplier['SUPP_ADDRESS']; ?></td>
                     <td>
@@ -114,7 +114,7 @@ include 'sidebar.php';
                                 '<?= $supplier['SUPP_ID']; ?>',
                                 '<?= addslashes($supplier['SUPP_NAME']); ?>',
                                 '<?= $supplier['SUPP_PHONE']; ?>',
-                                '<?= addslashes($supplier['SUPP_COMPANY']); ?>',
+                                '<?= addslashes($supplier['SUPP_BRAND']); ?>',
                                 '<?= $supplier['SUPP_EMAIL']; ?>',
                                 '<?= addslashes($supplier['SUPP_ADDRESS']); ?>'
                             )">Edit</button>

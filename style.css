@@ -73,7 +73,6 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1); 
 }
 .logout-item a { color: #ffcccc !important; }
-
 /* --- DASHBOARD --- */
 /* --- SCOPED DASHBOARD STYLING ONLY --- */
 
@@ -236,12 +235,6 @@ table td {
 }
 table tr:hover { background-color: #f8f9fa; }
 
-/* --- BUTTONS --- */
-.btn-add {
-    background-color: #0096FF ; color: white; padding: 10px 20px;
-    border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
-}
-
 .btn-edit { background-color: #4CAF50 !important; color: white !important; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
 .btn-delete { background-color: #f44336 !important; color: white !important; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
 
@@ -270,48 +263,164 @@ table tr:hover { background-color: #f8f9fa; }
     margin-bottom: 25px;
 }
 
-.filter-group {
+/* --- PERFORMANCE ANALYSIS FILTER STYLING --- */
+/* --- STYLISH VERTICAL-TO-HORIZONTAL FILTER --- */
+.analysis-filter-card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid var(--pink-soft);
+    box-shadow: 0 10px 25px rgba(255, 133, 161, 0.1);
+    margin-bottom: 30px;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: column; /* This stacks the header above the form */
+    gap: 20px;
 }
 
-.filter-group label {
+.analysis-header h4 {
+    margin: 0;
+    color: var(--pink-dark);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.analysis-header p {
+    margin: 5px 0 0 0;
     font-size: 0.85rem;
+    color: #999;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: row; /* This keeps the inputs side-by-side */
+    gap: 15px;
+    align-items: flex-end; /* Aligns the button with the inputs */
+    width: 100%;
+}
+
+.filter-field {
+    flex: 1; /* This makes all inputs equal width */
+}
+
+.filter-field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-color);
+    text-transform: uppercase;
+}
+/* Ensure all form elements calculate height the same way */
+.filter-input, 
+.filter-select, 
+.btn-analysis {
+    box-sizing: border-box; /* Crucial: includes padding in the height */
+    height: 45px; /* Fixed height for all */
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    align-items: flex-end; /* Aligns the bottom edges of the boxes */
+    width: 100%;
+}
+
+.filter-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-field label {
+    display: block;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #444;
+    margin-bottom: 8px;
+    color: #888;
     text-transform: uppercase;
 }
 
-/* Perfect alignment for all boxes */
-.filter-group select, 
-.filter-group input[type="date"],
-.btn-filter { 
-    height: 45px;
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid #dcdcdc;
-    font-family: 'Poppins', sans-serif;
-    box-sizing: border-box;
-    display: block;
-    outline: none;
-    margin: 0;
-}
-
-.btn-filter {
-    background-color: #0091ff;
+.btn-analysis {
+    background: #ff85a1;
     color: white;
     border: none;
+    padding: 0 25px; /* Horizontal only */
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    /* This centers the "Apply" text vertically inside the 45px height */
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+    line-height: 1;
+}
+
+.btn-analysis:hover {
+    background: #fd79a8;
+    transform: translateY(-1px);
+}
+
+/* 1. RESET BOX MODEL FOR ALL FORM ELEMENTS */
+.filter-input, 
+.filter-select, 
+.btn-analysis {
+    box-sizing: border-box !important; /* Force include padding/border in 45px */
+    height: 45px !important; 
+    margin: 0 !important; /* Remove any ghost margins */
+    border: 2px solid #ffdeeb; /* Consistent border for all */
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    display: flex;
+    align-items: center;
+}
+
+/* 2. SPECIFIC BUTTON TWEAKS */
+.btn-analysis {
+    background: #ff85a1;
+    color: white;
+    border: none; /* Buttons usually don't need the border of the inputs */
     padding: 0 25px;
     font-weight: 600;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
+    transition: 0.3s;
+    line-height: 1;
 }
 
-.btn-filter:hover {
-    background-color: #007bdd;
+/* 3. ALIGNMENT CONTAINER */
+.filter-row {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    align-items: flex-end; /* This aligns the bottom of the input boxes */
+    width: 100%;
+}
+
+.filter-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure the label doesn't have extra bottom margin pushing the box */
+.filter-field label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 6px; /* Reduced for a tighter fit */
+    color: #888;
+    text-transform: uppercase;
+}
+
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Category Badge Styling */
@@ -324,27 +433,30 @@ table tr:hover { background-color: #f8f9fa; }
 }
 
 /* Cari dan ganti bahagian ini dalam styles.css */
+/* Cari bahagian ini dalam styles.css */
 .btn-add {
     background: linear-gradient(135deg, #ff85a1, #fd79a8);
-    border-radius: 25px;
+    border-radius: 25px; /* Pill shape */
     color: white;
     font-weight: 700;
-    padding: 12px 25px;
+    padding: 12px 25px;  /* Fixed padding for a professional look */
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
-    width: fit-content;       /* Supaya tak wide */
-    display: inline-flex;
+    
+    display: inline-flex;  /* Important: makes it only as wide as the content */
     align-items: center;
     justify-content: center;
+    
+    width: fit-content !important; /* OVERRIDE the 100% width */
+    margin-bottom: 25px;
     box-shadow: 0 8px 15px rgba(255, 133, 161, 0.2);
-    font-family: 'Quicksand', sans-serif;
     text-decoration: none;
-    white-space: nowrap;      /* Supaya teks tak pecah dua */
+    white-space: nowrap; 
 }
 
 .btn-add:hover {
-    transform: translateY(-3px);
+    transform: translateY(-3px) scale(1.02);
     box-shadow: 0 12px 20px rgba(255, 133, 161, 0.4);
 }
 
@@ -583,55 +695,61 @@ form input:focus { border-color: var(--pink-dark); box-shadow: 0 0 8px rgba(255,
 }
 
 /* --- STATS CARDS (Versi Besar, Putih & Penuh) --- */
+/* --- UPDATED COMPACT STATS CARDS --- */
 .stats-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-    gap: 25px; 
-    margin-bottom: 40px; 
+    /* This creates a grid where cards are at most 250px, but it won't force them to fill 1fr */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 250px)); 
+    gap: 15px; 
+    margin-bottom: 20px; 
+    justify-content: flex-start; /* Keeps cards aligned to the left, not centered or stretched */
 }
 
 .stat-card {
     background: #ffffff;
-    padding: 40px 30px;      /* Padding lebih besar untuk nampak luas */
-    border-radius: 35px;
-    box-shadow: 0 15px 35px rgba(255, 133, 161, 0.12);
-    min-height: 220px;       /* Tinggikan lagi kotak */
-    border: 3px solid white;
+    padding: 15px 20px; 
+    border-radius: 15px; 
+    box-shadow: 0 8px 20px rgba(255, 133, 161, 0.08);
+    min-height: 80px; 
+    /* This ensures even if the grid tries to stretch it, it stays small */
+    max-width: 250px; 
+    border: 2px solid white;
     transition: all 0.3s ease;
     
-    /* Guna Flexbox supaya kandungan penuh dalam kotak */
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Agihkan teks ke atas, tengah, bawah */
-    align-items: center;            /* Letak semua di tengah (center) */
+    justify-content: center; 
+    align-items: center;
     text-align: center;
     box-sizing: border-box;
 }
 
 .stat-card:hover { 
-    transform: translateY(-10px);
-    box-shadow: 0 20px 45px rgba(255, 133, 161, 0.2);
+    transform: translateY(-5px); /* Reduced movement for smaller card */
+    box-shadow: 0 10px 25px rgba(255, 133, 161, 0.15);
 }
 
 .stat-card h3 { 
     margin: 0; 
-    font-size: 1.2em;
+    font-size: 0.85em; /* Shrunk from 1.2em */
     font-weight: 700;
     text-transform: uppercase; 
-    letter-spacing: 1.5px;
+    letter-spacing: 1px; /* Shrunk from 1.5px */
+    color: #888;
 }
 
 .stat-number { 
-    font-size: 4.5em;        /* Nombor sangat besar untuk memenuhi ruang */
+    font-size: 1.8em; /* Shrunk massively from 4.5em */
     font-weight: 800; 
-    line-height: 1;
-    margin: 15px 0;
+    line-height: 1.1;
+    margin: 5px 0; /* Shrunk margin from 15px to 5px */
     font-family: 'Quicksand', sans-serif;
+    color: var(--pink-dark);
 }
 
 .stat-card p {
     color: #a2a2a2;
-    font-size: 1em;
+    font-size: 0.75em; /* Shrunk from 1em */
     font-weight: 500;
     margin: 0;
 }

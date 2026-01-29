@@ -170,42 +170,62 @@ include 'sidebar.php';
         </div>
     </div>
 
-    <h2 id="view-title" style="font-size: 1.1em; color: #555; margin-bottom: 15px;">General Product List</h2>
-
-    <div id="expiry-filters" class="filter-container" style="display:none;">
-        <div class="filter-group">
-            <label>Branch Location</label>
-            <select id="filterBranch">
-                <option value="ALL">All Branches</option>
-                <?php foreach($uniqueBranches as $branch): ?><option value="<?= $branch ?>"><?= $branch ?></option><?php endforeach; ?>
-            </select>
+    <div id="expiry-filters" class="analysis-filter-card" style="display:none;">
+        <div class="analysis-header">
+            <h4>Expiry Analysis</h4>
+            <p>Filter products by branch and urgency status to manage stock effectively.</p>
         </div>
+        <form id="expiry-filter-form" class="filter-row" onsubmit="event.preventDefault(); filterExpiryTable();">
+            <div class="filter-field">
+                <label>Branch Location</label>
+                <select id="filterBranch" class="filter-select">
+                    <option value="ALL">All Branches</option>
+                    <?php foreach($uniqueBranches as $branch): ?>
+                        <option value="<?= $branch ?>"><?= $branch ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="filter-field">
+                <label>Urgency Status</label>
+                <select id="filterStatus" class="filter-select">
+                    <option value="ALL">All Statuses</option>
+                    <option value="URGENT">Urgent (≤ 2 Days)</option>
+                    <option value="WARNING">Warning (≤ 7 Days)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn-analysis">Apply</button>
+            </div>
+        </form>
     </div>
 
-    <div id="perf-filters" class="filter-container" style="display:none;">
-        <form method="GET" style="display: contents;">
-            <div class="filter-group">
+    <div id="perf-filters" class="analysis-filter-card" style="display:none;">
+        <div class="analysis-header">
+            <h4>Performance Analysis Parameters</h4>
+            <p>Analyze units sold and revenue within a specific timeframe and branch.</p>
+        </div>
+        <form method="GET" class="filter-row">
+            <div class="filter-field">
                 <label>Branch Location</label>
-                <select name="perfBranch" style="min-width: 250px;">
+                <select name="perfBranch" class="filter-select">
                     <?php foreach($allBranches as $bName): ?>
                         <option value="<?= $bName ?>" <?= ($perfBranch == $bName) ? 'selected' : '' ?>><?= $bName ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="filter-group">
+            <div class="filter-field">
                 <label>Start Date</label>
-                <input type="date" name="perfStart" value="<?= $perfStart ?>">
+                <input type="date" name="perfStart" class="filter-input" value="<?= $perfStart ?>">
             </div>
-            <div class="filter-group">
+            <div class="filter-field">
                 <label>End Date</label>
-                <input type="date" name="perfEnd" value="<?= $perfEnd ?>">
+                <input type="date" name="perfEnd" class="filter-input" value="<?= $perfEnd ?>">
             </div>
-            <div class="filter-group">
-                <label style="visibility: hidden;">Align</label>
-                <button type="submit" class="btn-filter">Apply</button>
-            </div>
+            <button type="submit" class="btn-analysis">Apply</button>
         </form>
     </div>
+
+    <h2 id="view-title" style="font-size: 1.1em; color: #555; margin-bottom: 15px;">General Product List</h2>
 
     <div id="standard-view" class="table-container">
         <table>
@@ -274,8 +294,60 @@ include 'sidebar.php';
     </div>
 </div>
 
-<div id="addProductModal" class="modal"><div class="modal-content">...</div></div>
-<div id="editProductModal" class="modal"><div class="modal-content">...</div></div>
+<div id="addProductModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>Add New Product</h2><span class="close" onclick="closeModal()">&times;</span></div>
+        <div class="modal-body">
+            <form action="add_product.php" method="post">
+                <label>Product Name</label><input type="text" name="prodName" required>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;"><label>List Price</label><input type="number" step="0.01" name="prodListPrice" required></div>
+                    <div style="flex: 1;"><label>Net Price</label><input type="number" step="0.01" name="prodNetPrice" required></div>
+                </div>
+                <label>Brand</label><input type="text" name="prodBrand" required>
+                <label>Category</label>
+                <select name="prodCategory" id="prodCategory" onchange="toggleFields()" style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
+                    <option value="Food">Food</option><option value="Non-Food">Non-Food</option>
+                </select>
 
+                <!-- Food Product Fields (Visible if "Food" is selected) -->
+                <div id="foodFields" style="display: none;">
+                    <label>Food Type</label>
+                    <select name="foodType">
+                        <option value="Fruit">Fruit</option>
+                        <option value="Vegetable">Vegetable</option>
+                        <option value="Meat">Meat</option>
+                        <option value="Drink">Drink</option>
+                        <option value="Snacks">Snacks</option>
+
+                    </select>
+
+                    <label>Expiry Date</label>
+                    <input type="date" name="expiryDate">
+
+                    <label>Storage Instructions</label>
+                    <input type="text" name="storageInstructions">
+                </div>
+                <div id="nonFoodFields" style="display:none;"><label>Non-Food Category</label><input type="text" name="nonFoodCategory"></div>
+                <button type="submit" class="btn-add" style="width:100%">Save Product</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="editProductModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>Edit Product</h2><span class="close" onclick="closeModal()">&times;</span></div>
+        <div class="modal-body">
+            <form action="edit_product.php" method="post">
+                <input type="hidden" id="editProd_ID" name="prodID">
+                <label>Product Name</label><input type="text" id="editProd_Name" name="prodName" required>
+                <label>List Price (RM)</label><input type="number" step="0.01" id="editProd_ListPrice" name="prodListPrice" required>
+                <label>Category</label><input type="text" id="editProd_Category" name="prodCategory" readonly style="background:#f9f9f9; color:#888;">
+                <button type="submit" class="btn-edit" style="width:100%; margin-top:10px;">Update Product</button>
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 </html>

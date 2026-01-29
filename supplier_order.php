@@ -50,13 +50,12 @@ include 'sidebar.php';
 
 <div class="main-content">
     <div class="dashboard-header">
-        <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <div>
-        <h1 style="margin: 0;">Supplier Order Management</h1>
-        <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Track and manage stock orders from vendors</p>
+        <div>
+            <h1 style="margin: 0;">Supplier Order Management</h1>
+            <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Track and manage stock orders from vendors</p>
+        </div>
+        <button class="btn-add" onclick="openAddOrderModal()">+ New Order</button>
     </div>
-    <button class="btn-add" onclick="openAddOrderModal()">+ New Order</button>
-</div>
 
     <div class="section-divider"></div>
 
@@ -65,7 +64,19 @@ include 'sidebar.php';
             <h3>Total Orders</h3>
             <span class="stat-number"><?= count($supplier_orders); ?></span>
         </div>
+
+        <div class="stat-card" style="border-left-color: #f44336;">
+            <h3>Total Amount</h3>
+            <span class="stat-number" style="font-size: 1.5em;">RM <?= number_format($total_cost, 2); ?></span>
+        </div>
+        
+        <div class="stat-card" style="border-left-color: #4CAF50;">
+            <h3>Total Qty</h3>
+            <span class="stat-number"><?= $total_qty; ?></span>
+        </div>
     </div>
+
+    <h2 style="font-size: 1.1em; color: #555; margin-bottom: 15px;">Order History</h2>
 
     <div class="table-container">
         <table>
@@ -100,7 +111,6 @@ include 'sidebar.php';
         </table>
     </div>
 </div>
-
 <div id="addOrderModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
