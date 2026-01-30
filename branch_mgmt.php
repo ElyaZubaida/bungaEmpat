@@ -109,14 +109,19 @@ include 'sidebar.php';
             <form action="add_branch.php" method="post">
                 <label>Branch ID</label>
                 <input type="text" name="branchID" value="<?= $next_branch_id; ?>" readonly>
+                
                 <label>Branch Name</label>
-                <input type="text" name="branchName" required>
+                <input type="text" name="branchName" placeholder="e.g. Bunga Empat UiTM Shah Alam" required>
+                
                 <label>Address</label>
-                <input type="text" name="branchLocation" required>
+                <input type="text" name="branchLocation" placeholder="Full address of the branch" required>
+                
                 <label>Phone</label>
-                <input type="text" name="branchPhone" required>
+                <input type="text" name="branchPhone" placeholder="e.g. 03-55442000" required>
+                
                 <label>Email</label>
-                <input type="email" name="branchEmail" required>
+                <input type="email" name="branchEmail" placeholder="branch@cloudbyte.com" required>
+                
                 <button type="submit" class="btn-add" style="width:100%">Save Branch</button>
             </form>
         </div>
@@ -132,14 +137,19 @@ include 'sidebar.php';
         <div class="modal-body">
             <form action="edit_branch.php" method="post">
                 <input type="hidden" id="editBranch_ID" name="branchID">
+                
                 <label>Branch Name</label>
-                <input type="text" id="editBranch_Name" name="branchName" required>
+                <input type="text" id="editBranch_Name" name="branchName" placeholder="Update branch name" required>
+                
                 <label>Address</label>
-                <input type="text" id="editBranch_Location" name="branchLocation" required>
+                <input type="text" id="editBranch_Location" name="branchLocation" placeholder="Update address" required>
+                
                 <label>Phone</label>
-                <input type="text" id="editBranch_Phone" name="branchPhone" required>
+                <input type="text" id="editBranch_Phone" name="branchPhone" placeholder="Update contact number" required>
+                
                 <label>Email</label>
-                <input type="email" id="editBranch_Email" name="branchEmail" required>
+                <input type="email" id="editBranch_Email" name="branchEmail" placeholder="Update email address" required>
+                
                 <button type="submit" class="btn-edit" style="width:100%">Update Branch</button>
             </form>
         </div>

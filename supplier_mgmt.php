@@ -15,6 +15,18 @@ while ($row = oci_fetch_assoc($stid)) {
     $suppliers[] = $row;
 }
 
+// --- LOGIC TO GENERATE THE NEXT SUPPLIER ID FOR THE MODAL ---
+$id_query = "SELECT MAX(TO_NUMBER(SUBSTR(SUPP_ID, 2))) AS MAX_VAL FROM SUPPLIER";
+$id_stid = oci_parse($conn, $id_query);
+oci_execute($id_stid);
+$id_row = oci_fetch_assoc($id_stid);
+
+$latest_num = $id_row['MAX_VAL'];
+// If table empty, start at 1. Otherwise, increment.
+$next_num = ($latest_num) ? $latest_num + 1 : 1;
+$next_supp_id = "S" . str_pad($next_num, 3, "0", STR_PAD_LEFT);
+oci_free_statement($id_stid);
+
 // Free the statement and close the connection
 oci_free_statement($stid);
 oci_close($conn);
@@ -35,13 +47,13 @@ include 'sidebar.php';
             document.getElementById("addSupplierModal").style.display = "flex";
         }
 
-        // PEMBETULAN: Menggunakan suppCompany dan ID input yang betul
-        function openEditSupplierModal(suppID, suppName, suppPhone, suppCompany, suppEmail, suppAddress) {
+        // PEMBETULAN: Menggunakan suppBrand untuk konsistensi data
+        function openEditSupplierModal(suppID, suppName, suppPhone, suppBrand, suppEmail, suppAddress) {
             document.getElementById("editSupplierModal").style.display = "flex";
             document.getElementById("editSupp_ID").value = suppID;
             document.getElementById("editSupp_Name").value = suppName;
             document.getElementById("editSupp_Phone").value = suppPhone;
-            document.getElementById("editSupp_Company").value = suppCompany; 
+            document.getElementById("editSupp_Brand").value = suppBrand; 
             document.getElementById("editSupp_Email").value = suppEmail;
             document.getElementById("editSupp_Address").value = suppAddress;
         }
@@ -136,23 +148,30 @@ include 'sidebar.php';
         </div>
         <div class="modal-body">
             <form action="add_supplier.php" method="post">
+                <label>Supplier ID</label>
+                <input type="text" name="suppID" value="<?= $next_supp_id; ?>" readonly>
+
                 <label>Supplier Name</label>
-                <input type="text" name="suppName" required placeholder="Contact Person Name">
+                <input type="text" name="suppName" required placeholder="e.g. Ahmad bin Zaki">
+                
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Phone Number</label>
-                        <input type="text" name="suppPhone" required>
+                        <input type="text" name="suppPhone" required placeholder="e.g. 012-3456789">
                     </div>
                     <div style="flex: 1;">
                         <label>Email Address</label>
-                        <input type="email" name="suppEmail" required>
+                        <input type="email" name="suppEmail" required placeholder="e.g. supplier@gmail.com">
                     </div>
                 </div>
+
                 <label>Company / Brand Name</label>
-                <input type="text" name="suppCompany" required placeholder="Company Name">
+                <input type="text" name="suppBrand" required placeholder="e.g. Nestle Malaysia">
+                
                 <label>Office Address</label>
-                <textarea name="suppAddress" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px;"></textarea>
-                <button type="submit" class="btn-add" style="width:100%">Register Supplier</button>
+                <textarea name="suppAddress" required placeholder="Enter full office address" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-family: inherit;"></textarea>
+                
+                <button type="submit" class="modal-btn-full">Register Supplier</button>
             </form>
         </div>
     </div>
@@ -167,22 +186,28 @@ include 'sidebar.php';
         <div class="modal-body">
             <form action="edit_supplier.php" method="post">
                 <input type="hidden" id="editSupp_ID" name="suppID">
+                
                 <label>Supplier Name</label>
-                <input type="text" id="editSupp_Name" name="suppName" required>
+                <input type="text" id="editSupp_Name" name="suppName" required placeholder="Update contact person name">
+                
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Phone</label>
-                        <input type="text" id="editSupp_Phone" name="suppPhone" required>
+                        <input type="text" id="editSupp_Phone" name="suppPhone" required placeholder="Update phone number">
                     </div>
                     <div style="flex: 1;">
                         <label>Email</label>
-                        <input type="email" id="editSupp_Email" name="suppEmail" required>
+                        <input type="email" id="editSupp_Email" name="suppEmail" required placeholder="Update email address">
                     </div>
                 </div>
-                <label>Company</label>
-                <input type="text" id="editSupp_Company" name="suppCompany" required> <label>Address</label>
-                <textarea id="editSupp_Address" name="suppAddress" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px;"></textarea>
-                <button type="submit" class="btn-edit" style="width:100%">Update Supplier</button>
+
+                <label>Company / Brand Name</label>
+                <input type="text" id="editSupp_Brand" name="suppBrand" required placeholder="Update company name"> 
+                
+                <label>Address</label>
+                <textarea id="editSupp_Address" name="suppAddress" required placeholder="Update office address" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-family: inherit;"></textarea>
+                
+                <button type="submit" class="modal-btn-full">Update Supplier</button>
             </form>
         </div>
     </div>

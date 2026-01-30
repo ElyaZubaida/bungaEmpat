@@ -1,8 +1,23 @@
 <?php
 include 'db_connection.php';
 
+session_start(); // 1. Always start session first!
+
+// 2. The Gatekeeper: Check if logged in here
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: index.php"); 
+    exit();
+}
+$currentStaffName = $_SESSION['staff_name'];
+$currentStaffID   = $_SESSION['staff_id'];
+
 // Fetch all stock data
-$query = "SELECT STOCK_ID, PROD_ID, BRANCH_ID, STAFF_ID, STOCK_QUANTITY, STOCK_IN, STOCK_OUT FROM STOCK ORDER BY STOCK_ID ASC";
+$query = "SELECT s.STOCK_ID, s.PROD_ID, p.PROD_NAME, s.BRANCH_ID, b.BRANCH_NAME, 
+                 s.STAFF_ID, s.STOCK_QUANTITY, s.STOCK_IN, s.STOCK_OUT 
+          FROM STOCK s
+          JOIN PRODUCT p ON s.PROD_ID = p.PROD_ID
+          JOIN BRANCH b ON s.BRANCH_ID = b.BRANCH_ID
+          ORDER BY s.STOCK_ID ASC";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
 
@@ -19,6 +34,35 @@ while ($row = oci_fetch_assoc($stid)) {
     $total_out += $row['STOCK_OUT'];
 }
 
+// 2. FETCH LISTS FOR DROPDOWNS
+$prod_list = oci_parse($conn, "SELECT PROD_ID, PROD_NAME FROM PRODUCT ORDER BY PROD_NAME");
+oci_execute($prod_list);
+$allProds = []; while($r = oci_fetch_assoc($prod_list)) { $allProds[] = $r; }
+
+$branch_list = oci_parse($conn, "SELECT BRANCH_ID, BRANCH_NAME FROM BRANCH ORDER BY BRANCH_NAME");
+oci_execute($branch_list);
+$allBranches = []; while($r = oci_fetch_assoc($branch_list)) { $allBranches[] = $r; }
+
+$staff_list = oci_parse($conn, "SELECT STAFF_ID, STAFF_NAME FROM STAFF ORDER BY STAFF_NAME");
+oci_execute($staff_list);
+$allStaff = []; while($r = oci_fetch_assoc($staff_list)) { $allStaff[] = $r; }
+
+// 3. GENERATE NEXT STOCK ID
+$id_q = "SELECT MAX(TO_NUMBER(SUBSTR(STOCK_ID, 2))) AS MAX_ID FROM STOCK";
+$id_stid = oci_parse($conn, $id_q);
+oci_execute($id_stid);
+$id_row = oci_fetch_assoc($id_stid);
+$next_stock_id = "K" . (($id_row['MAX_ID']) ? $id_row['MAX_ID'] + 1 : 10001);
+
+$staff_map_query = "SELECT STAFF_ID, STAFF_NAME, BRANCH_ID FROM STAFF ORDER BY STAFF_NAME";
+$sm_stid = oci_parse($conn, $staff_map_query);
+oci_execute($sm_stid);
+$staffMapping = [];
+while ($row = oci_fetch_assoc($sm_stid)) {
+    $staffMapping[] = $row;
+}
+
+oci_free_statement($id_stid);
 oci_free_statement($stid);
 oci_close($conn);
 
@@ -37,17 +81,27 @@ include 'sidebar.php';
             document.getElementById("addStockModal").style.display = "flex"; 
         }
 
-        function openEditStockModal(id, prod, branch, staff, qty, s_in, s_out) {
-            document.getElementById("editStockModal").style.display = "flex";
-            document.getElementById("editStock_ID").value = id;
-            document.getElementById("editProd_ID").value = prod;
-            document.getElementById("editBranch_ID").value = branch;
-            document.getElementById("editStaff_ID").value = staff;
-            document.getElementById("editStock_Quantity").value = qty;
-            document.getElementById("editStock_In").value = s_in;
-            document.getElementById("editStock_Out").value = s_out;
-        }
+        function openEditStockModal(id, prodID, prodName, branchID, branchName, lastStaffID, qty, s_in, s_out) {
+    document.getElementById("editStockModal").style.display = "flex";
+    
+    // IDs for hidden fields
+    document.getElementById("editStock_ID").value = id;
+    document.getElementById("hidden_ProdID").value = prodID;
+    document.getElementById("hidden_BranchID").value = branchID;
 
+    // Mapping details to locked inputs
+    document.getElementById("display_StockID_Edit").value = id;
+    document.getElementById("display_BranchName_Edit").value = branchName + " (" + branchID + ")";
+    document.getElementById("display_ProdName_Edit").value = prodName + " (" + prodID + ")";
+    
+    // Display the Previous Staff ID
+    document.getElementById("label_LastStaffID").value = lastStaffID;
+
+    // Editable fields
+    document.getElementById("editStock_Quantity").value = qty;
+    document.getElementById("editStock_In").value = s_in;
+    document.getElementById("editStock_Out").value = s_out;
+}
         function closeModal() {
             document.getElementById("addStockModal").style.display = "none";
             document.getElementById("editStockModal").style.display = "none";
@@ -60,6 +114,25 @@ include 'sidebar.php';
                 window.location.href = 'delete_stock.php?stock_id=' + stockID;
             }
         }
+        const staffData = <?= json_encode($staffMapping); ?>;
+
+function filterStaffByBranch() {
+    const selectedBranch = document.getElementById("addBranchID").value;
+    const staffSelect = document.getElementById("addStaffID");
+    
+    // Clear existing options
+    staffSelect.innerHTML = '<option value="" disabled selected>Select Staff from this Branch</option>';
+    
+    // Filter and Add relevant staff
+    staffData.forEach(staff => {
+        if (staff.BRANCH_ID === selectedBranch) {
+            const opt = document.createElement("option");
+            opt.value = staff.STAFF_ID;
+            opt.text = staff.STAFF_NAME + " (" + staff.STAFF_ID + ")";
+            staffSelect.add(opt);
+        }
+    });
+}
     </script>
 </head>
 <body>
@@ -95,8 +168,8 @@ include 'sidebar.php';
             <thead>
                 <tr>
                     <th>Stock ID</th>
-                    <th>Product ID</th>
-                    <th>Branch ID</th>
+                    <th>Product</th>
+                    <th>Branch</th>
                     <th>Staff ID</th>
                     <th>Quantity</th>
                     <th>Stock In</th>
@@ -108,8 +181,16 @@ include 'sidebar.php';
                 <?php foreach ($stocks as $stockItem) : ?>
                 <tr>
                     <td style="font-weight:600; color:#888;"><?= $stockItem['STOCK_ID']; ?></td>
-                    <td><?= $stockItem['PROD_ID']; ?></td>
-                    <td><?= $stockItem['BRANCH_ID']; ?></td>
+                    <td>
+                        <strong><?= $stockItem['PROD_NAME']; ?></strong><br>
+                        <small style="color: #999;"><?= $stockItem['PROD_ID']; ?></small>
+                    </td>
+                    
+                    <td>
+                        <strong><?= $stockItem['BRANCH_NAME']; ?></strong><br>
+                        <small style="color: #999;"><?= $stockItem['BRANCH_ID']; ?></small>
+                    </td>
+                    
                     <td><?= $stockItem['STAFF_ID']; ?></td>
                     <td style="font-weight:600;"><?= $stockItem['STOCK_QUANTITY']; ?></td>
                     <td style="color:#4CAF50;">+ <?= $stockItem['STOCK_IN']; ?></td>
@@ -117,12 +198,14 @@ include 'sidebar.php';
                     <td>
                         <div style="display:flex; gap:10px;">
                             <button class="btn-edit" onclick="openEditStockModal(
-                                '<?= $stockItem['STOCK_ID']; ?>',
-                                '<?= $stockItem['PROD_ID']; ?>',
-                                '<?= $stockItem['BRANCH_ID']; ?>',
-                                '<?= $stockItem['STAFF_ID']; ?>',
-                                '<?= $stockItem['STOCK_QUANTITY']; ?>',
-                                '<?= $stockItem['STOCK_IN']; ?>',
+                                '<?= $stockItem['STOCK_ID']; ?>', 
+                                '<?= $stockItem['PROD_ID']; ?>', 
+                                '<?= addslashes($stockItem['PROD_NAME']); ?>', 
+                                '<?= $stockItem['BRANCH_ID']; ?>', 
+                                '<?= addslashes($stockItem['BRANCH_NAME']); ?>', 
+                                '<?= $stockItem['STAFF_ID']; ?>', 
+                                '<?= $stockItem['STOCK_QUANTITY']; ?>', 
+                                '<?= $stockItem['STOCK_IN']; ?>', 
                                 '<?= $stockItem['STOCK_OUT']; ?>'
                             )">Edit</button>
                             <button class="btn-delete" onclick="confirmDelete('<?= $stockItem['STOCK_ID']; ?>')">Delete</button>
@@ -138,35 +221,43 @@ include 'sidebar.php';
 <div id="addStockModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Add Stock Entry</h2>
+            <h2>Initialize Branch Stock</h2>
             <span class="close" onclick="closeModal()">&times;</span>
         </div>
         <div class="modal-body">
             <form action="add_stock.php" method="post">
-                <label>Product ID</label>
-                <input type="text" name="prodID" placeholder="e.g. P101" required>
+                <input type="hidden" name="staffID" value="<?= $currentStaffID ?>">
 
-                <label>Branch ID</label>
-                <input type="text" name="branchID" placeholder="e.g. B101" required>
+                <label>Stock ID</label>
+                <input type="text" name="stockID" value="<?= $next_stock_id; ?>" readonly class="locked-input">
 
-                <label>Staff ID</label>
-                <input type="text" name="staffID" placeholder="e.g. S101" required>
+                <label>Product</label>
+                <select name="prodID" required>
+                    <option value="" disabled selected>Select Product</option>
+                    <?php foreach($allProds as $p): ?>
+                        <option value="<?= $p['PROD_ID'] ?>"><?= $p['PROD_NAME'] ?> (<?= $p['PROD_ID'] ?>)</option>
+                    <?php endforeach; ?>
+                </select>
 
-                <label>Initial Quantity</label>
-                <input type="number" name="stockQuantity" required>
+                <label>Branch Location</label>
+                <select name="branchID" required>
+                    <option value="" disabled selected>Select Branch</option>
+                    <?php foreach($allBranches as $b): ?>
+                        <option value="<?= $b['BRANCH_ID'] ?>"><?= $b['BRANCH_NAME'] ?></option>
+                    <?php endforeach; ?>
+                </select>
 
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label>Stock In</label>
-                        <input type="number" name="stockIn" value="0">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Stock Out</label>
-                        <input type="number" name="stockOut" value="0">
+                <label>Recorded By</label>
+                <div class="staff-info-box">
+                    <div style="font-weight: 600; color: #7d5a5a;">
+                        <?= htmlspecialchars($currentStaffName) ?> (<?= htmlspecialchars($currentStaffID) ?>)
                     </div>
                 </div>
 
-                <button type="submit" class="btn-add" style="width: 100%; margin-top: 10px;">Save Stock</button>
+                <label>Opening Quantity</label>
+                <input type="number" name="stockQuantity" required value="0">
+
+                <button type="submit" class="modal-btn-full">Initialize Stock</button>
             </form>
         </div>
     </div>
@@ -181,30 +272,35 @@ include 'sidebar.php';
         <div class="modal-body">
             <form action="edit_stock.php" method="post">
                 <input type="hidden" id="editStock_ID" name="stockID">
+                <input type="hidden" id="hidden_ProdID" name="prodID">
+                <input type="hidden" id="hidden_BranchID" name="branchID">
                 
-                <label>Product ID</label>
-                <input type="text" id="editProd_ID" name="prodID" required>
+                <input type="hidden" name="staffID" value="<?= $currentStaffID ?>">
 
-                <label>Branch ID</label>
-                <input type="text" id="editBranch_ID" name="branchID" required>
+                <label>Stock ID</label>
+                <input type="text" id="display_StockID_Edit" readonly class="locked-input">
 
                 <label>Staff ID</label>
-                <input type="text" id="editStaff_ID" name="staffID" required>
+                <input type="text" id="label_LastStaffID" readonly class="staff-info-box locked-input">
 
-                <label>Quantity</label>
+                <label>Branch Location</label>
+                <input type="text" id="display_BranchName_Edit" readonly class="locked-input">
+
+                <label>Product Details</label>
+                <input type="text" id="display_ProdName_Edit" readonly class="locked-input">
+
+                <label>Physical Quantity</label>
                 <input type="number" id="editStock_Quantity" name="stockQuantity" required>
 
-                <label>Stock In</label>
-                <input type="number" id="editStock_In" name="stockIn">
+                <div class="input-row" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;"><label>Stock In (+)</label><input type="number" id="editStock_In" name="stockIn"></div>
+                    <div style="flex: 1;"><label>Stock Out (-)</label><input type="number" id="editStock_Out" name="stockOut"></div>
+                </div>
 
-                <label>Stock Out</label>
-                <input type="number" id="editStock_Out" name="stockOut">
-
-                <button type="submit" class="btn-edit" style="width: 100%; margin-top: 10px;">Update Record</button>
+                <button type="submit" class="btn-edit modal-btn-full">Update Record</button>
             </form>
         </div>
     </div>
 </div>
-
 </body>
 </html>

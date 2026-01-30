@@ -3,17 +3,17 @@ include 'db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    $custID             = $_POST['custID']; // Hidden input dalam modal/form
-    $custName           = $_POST['custName'];
-    $custEmail          = $_POST['custEmail'];
-    $custPhone          = $_POST['custPhone'];
-    $custLoyaltyPoints  = $_POST['custLoyaltyPoints'];
-    $custDateRegistered = $_POST['custDateRegistered']; // Format: YYYY-MM-DD
+    $custID = $_POST['custID'];
+    $custName = $_POST['custName'];
+    $custEmail = $_POST['custEmail'];
+    $custPhone = $_POST['custPhone'];
+    $custLoyaltyPoints = $_POST['custLoyaltyPoints'];
+    $custDateRegistered = $_POST['custDateRegistered'];
 
     $query = "UPDATE CUSTOMER 
               SET CUST_NAME = :custName, 
                   CUST_EMAIL = :custEmail, 
-                  CUST_PHONE = :custPhone, 
+                  CUST_PHONE = :custPhone,
                   CUST_LOYALTYPOINTS = :custLoyaltyPoints,
                   CUST_DATEREGISTERED = TO_DATE(:custDateRegistered, 'YYYY-MM-DD')
               WHERE CUST_ID = :custID";
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = oci_execute($stid);
 
     if ($result) {
-        header('Location: customer_mgmt.php');
+        header("Location: customer_mgmt.php");
         exit(); 
     } else {
         $e = oci_error($stid);

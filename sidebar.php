@@ -1,6 +1,9 @@
 <?php
 // Dapatkan nama fail semasa (contoh: dashboard.php)
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// Optional: Get the name for a "Profile" section in sidebar
+$displayName = $_SESSION['staff_name'] ?? "Staff";
 ?>
 
 <!DOCTYPE html>

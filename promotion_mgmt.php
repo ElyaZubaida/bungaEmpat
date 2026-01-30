@@ -1,28 +1,30 @@
 <?php
 include 'db_connection.php';
 
-// Fetch Promotions with formatted dates
+// --- 1. FETCH PROMOTIONS ---
 $query = "SELECT PROMO_ID, PROMO_NAME, PROMO_DESC, 
-                 TO_CHAR(PROMO_STARTDATE, 'DD/MM/YYYY') AS START_DATE, 
-                 TO_CHAR(PROMO_ENDDATE, 'DD/MM/YYYY') AS END_DATE, 
+                 TO_CHAR(PROMO_STARTDATE, 'YYYY-MM-DD') AS START_DATE, 
+                 TO_CHAR(PROMO_ENDDATE, 'YYYY-MM-DD') AS END_DATE, 
                  PROMO_AMOUNT 
           FROM PROMOTION 
           ORDER BY PROMO_ID ASC";
 
 $stid = oci_parse($conn, $query);
 oci_execute($stid);
-
 $promotions = [];
-$total_discount = 0;
-
-while ($row = oci_fetch_assoc($stid)) {
-    $promotions[] = $row;
-    $total_discount += $row['PROMO_AMOUNT'];
-}
-
+while ($row = oci_fetch_assoc($stid)) { $promotions[] = $row; }
 oci_free_statement($stid);
-oci_close($conn);
 
+// --- 2. GENERATE NEXT PROMO ID ---
+$id_query = "SELECT MAX(TO_NUMBER(SUBSTR(PROMO_ID, 2))) AS MAX_ID FROM PROMOTION";
+$id_stid = oci_parse($conn, $id_query);
+oci_execute($id_stid);
+$id_row = oci_fetch_assoc($id_stid);
+$next_num = ($id_row['MAX_ID']) ? $id_row['MAX_ID'] + 1 : 1;
+$next_promo_id = "P" . str_pad($next_num, 3, "0", STR_PAD_LEFT);
+oci_free_statement($id_stid);
+
+oci_close($conn);
 include 'sidebar.php';
 ?>
 
@@ -31,53 +33,38 @@ include 'sidebar.php';
 <head>
     <meta charset="UTF-8">
     <title>Promotion Management | Bunga Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script>
-        function openAddPromotionModal() { 
-            document.getElementById("addPromotionModal").style.display = "flex"; 
-        }
-
-        function openEditPromotionModal(id, name, description, startDate, endDate, amount) {
+        function openAddPromotionModal() { document.getElementById("addPromotionModal").style.display = "flex"; }
+        function openEditPromotionModal(id, name, desc, start, end, amount) {
             document.getElementById("editPromotionModal").style.display = "flex";
             document.getElementById("editPromo_ID").value = id;
             document.getElementById("editPromo_Name").value = name;
-            document.getElementById("editPromo_Desc").value = description;
-            document.getElementById("editStart_Date").value = startDate;
-            document.getElementById("editEnd_Date").value = endDate;
+            document.getElementById("editPromo_Desc").value = desc;
+            document.getElementById("editStart_Date").value = start;
+            document.getElementById("editEnd_Date").value = end;
             document.getElementById("editPromo_Amount").value = amount;
         }
-
         function closeModal() {
             document.getElementById("addPromotionModal").style.display = "none";
             document.getElementById("editPromotionModal").style.display = "none";
         }
-
-        window.onclick = function(event) { if (event.target.className === 'modal') closeModal(); }
-
-        function confirmDelete(promoID) {
-            if (confirm("Permanently delete promotion " + promoID + "?")) {
-                window.location.href = 'delete_promotion.php?promo_id=' + promoID;
-            }
+        function confirmDelete(id) {
+            if (confirm("Delete promotion " + id + "?")) window.location.href = 'delete_promotion.php?promo_id=' + id;
         }
     </script>
 </head>
 <body>
 
 <div class="main-content">
-    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <div>
-        <h1 style="margin: 0;">Promotion Management</h1>
-        <p style="color: #888; margin: 5px 0 0 0; font-size: 0.9em;">Create and manage special offers</p>
+    <div class="dashboard-header">
+        <h1>Promotion Management</h1>
+        <button class="btn-add" onclick="openAddPromotionModal()">+ Add Promotion</button>
     </div>
-    <button class="btn-add" onclick="openAddPromotionModal()">+ Add Promotion</button>
-</div>
-
-    <div class="section-divider"></div>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <h3>Total Promotions</h3>
+            <h3>Total Promotion</h3>
             <span class="stat-number"><?= count($promotions); ?></span>
         </div>
     </div>
@@ -90,33 +77,24 @@ include 'sidebar.php';
                     <th>Promotion Name</th>
                     <th>Description</th>
                     <th>Duration</th>
-                    <th>Amount</th>
+                    <th>Amount (RM)</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($promotions as $promo) : ?>
+                <?php foreach ($promotions as $promo): ?>
                 <tr>
-                    <td style="font-weight:600; color:#888;"><?= $promo['PROMO_ID']; ?></td>
+                    <td><?= $promo['PROMO_ID']; ?></td>
                     <td><strong><?= $promo['PROMO_NAME']; ?></strong></td>
-                    <td style="max-width: 250px; color: #666; font-size: 0.85em;"><?= $promo['PROMO_DESC']; ?></td>
+                    <td style="max-width: 250px; font-size: 0.85em;"><?= $promo['PROMO_DESC']; ?></td>
                     <td>
-                        <small style="display:block;">Start: <?= $promo['START_DATE']; ?></small>
-                        <small style="display:block;">End: <?= $promo['END_DATE']; ?></small>
+                        <small>From: <?= date('d M Y', strtotime($promo['START_DATE'])); ?></small><br>
+                        <small>To: <?= date('d M Y', strtotime($promo['END_DATE'])); ?></small>
                     </td>
-                    <td style="font-weight:600; color: #f44336;">RM <?= number_format($promo['PROMO_AMOUNT'], 2); ?></td>
+                    <td style="color:#f44336; font-weight:700;">RM <?= number_format($promo['PROMO_AMOUNT'], 2); ?></td>
                     <td>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn-edit" onclick="openEditPromotionModal(
-                                '<?= $promo['PROMO_ID']; ?>',
-                                '<?= addslashes($promo['PROMO_NAME']); ?>',
-                                '<?= addslashes($promo['PROMO_DESC']); ?>',
-                                '<?= $promo['START_DATE']; ?>',
-                                '<?= $promo['END_DATE']; ?>',
-                                '<?= $promo['PROMO_AMOUNT']; ?>'
-                            )">Edit</button>
-                            <button class="btn-delete" onclick="confirmDelete('<?= $promo['PROMO_ID']; ?>')">Delete</button>
-                        </div>
+                        <button class="btn-edit" onclick="openEditPromotionModal('<?= $promo['PROMO_ID']; ?>', '<?= addslashes($promo['PROMO_NAME']); ?>', '<?= addslashes($promo['PROMO_DESC']); ?>', '<?= $promo['START_DATE']; ?>', '<?= $promo['END_DATE']; ?>', '<?= $promo['PROMO_AMOUNT']; ?>')">Edit</button>
+                        <button class="btn-delete" onclick="confirmDelete('<?= $promo['PROMO_ID']; ?>')">Delete</button>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -128,32 +106,29 @@ include 'sidebar.php';
 <div id="addPromotionModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Create New Promotion</h2>
+            <h2>New Promotion</h2>
             <span class="close" onclick="closeModal()">&times;</span>
         </div>
         <div class="modal-body">
             <form action="add_promotion.php" method="post">
+                <label>Promotion ID</label>
+                <input type="text" name="promoID" value="<?= $next_promo_id; ?>" readonly style="background:#f5f5f5;">
+
                 <label>Promotion Name</label>
-                <input type="text" name="promoName" required placeholder="e.g. Lunar New Year Sale">
+                <input type="text" name="promoName" required placeholder="e.g. End of Year Clearance">
 
                 <label>Description</label>
-                <input type="text" name="promoDesc" required placeholder="Brief campaign details">
+                <input type="text" name="promoDesc" required placeholder="Brief description">
 
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label>Start Date</label>
-                        <input type="text" name="startDate" placeholder="DD/MM/YYYY" required>
-                    </div>
-                    <div style="flex: 1;">
-                        <label>End Date</label>
-                        <input type="text" name="endDate" placeholder="DD/MM/YYYY" required>
-                    </div>
+                <div class="input-row">
+                    <div style="flex:1;"><label>Start Date</label><input type="date" name="startDate" required></div>
+                    <div style="flex:1;"><label>End Date</label><input type="date" name="endDate" required></div>
                 </div>
 
-                <label>Discount Amount (RM)</label>
-                <input type="number" step="0.01" name="promoAmount" required>
+                <label>Discount (RM)</label>
+                <input type="number" step="0.01" name="promoAmount" required placeholder="0.00">
 
-                <button type="submit" class="btn-add" style="width:100%">Publish Promotion</button>
+                <button type="submit" class="modal-btn-full">Add Promotion</button>
             </form>
         </div>
     </div>
@@ -168,28 +143,14 @@ include 'sidebar.php';
         <div class="modal-body">
             <form action="edit_promotion.php" method="post">
                 <input type="hidden" id="editPromo_ID" name="promoID">
-
-                <label>Promotion Name</label>
-                <input type="text" id="editPromo_Name" name="promoName" required>
-
-                <label>Description</label>
-                <input type="text" id="editPromo_Desc" name="promoDesc" required>
-
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label>Start Date</label>
-                        <input type="text" id="editStart_Date" name="startDate" required>
-                    </div>
-                    <div style="flex: 1;">
-                        <label>End Date</label>
-                        <input type="text" id="editEnd_Date" name="endDate" required>
-                    </div>
+                <label>Promotion Name</label><input type="text" id="editPromo_Name" name="promoName" required>
+                <label>Description</label><input type="text" id="editPromo_Desc" name="promoDesc" required>
+                <div class="input-row">
+                    <div style="flex:1;"><label>Start Date</label><input type="date" id="editStart_Date" name="startDate" required></div>
+                    <div style="flex:1;"><label>End Date</label><input type="date" id="editEnd_Date" name="endDate" required></div>
                 </div>
-
-                <label>Discount Amount (RM)</label>
-                <input type="number" step="0.01" id="editPromo_Amount" name="promoAmount" required>
-
-                <button type="submit" class="btn-edit" style="width:100%">Save Changes</button>
+                <label>Discount (RM)</label><input type="number" step="0.01" id="editPromo_Amount" name="promoAmount" required>
+                <button type="submit" class="btn-edit modal-btn-full">Save Changes</button>
             </form>
         </div>
     </div>
