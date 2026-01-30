@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $custLoyaltyPoints = $_POST['custLoyaltyPoints'];
     $custDateRegistered = $_POST['custDateRegistered'];
 
+    // UPDATE CUSTOMERS
     $query = "UPDATE CUSTOMER 
               SET CUST_NAME = :custName, 
                   CUST_EMAIL = :custEmail, 

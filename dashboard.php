@@ -19,30 +19,61 @@ $userBranch = oci_fetch_assoc($stidB);
 $myBranchID = $userBranch['BRANCH_ID'];
 $myBranchName = $userBranch['BRANCH_NAME'];
 
-// 2. TOP CARDS (Current Branch Only)
-$qTopProd = "SELECT P.PROD_NAME FROM PRODUCT P JOIN PRODUCT_SALE PS ON P.PROD_ID = PS.PROD_ID JOIN SALE S ON PS.SALE_ID = S.SALE_ID JOIN STAFF ST ON S.STAFF_ID = ST.STAFF_ID WHERE ST.BRANCH_ID = :bid GROUP BY P.PROD_NAME ORDER BY SUM(PS.PS_QUANTITY) DESC FETCH FIRST 1 ROWS ONLY";
+// 2. TOP PRODUCTS
+$qTopProd = "SELECT P.PROD_NAME 
+            FROM PRODUCT P 
+            JOIN PRODUCT_SALE PS ON P.PROD_ID = PS.PROD_ID 
+            JOIN SALE S ON PS.SALE_ID = S.SALE_ID 
+            JOIN STAFF ST ON S.STAFF_ID = ST.STAFF_ID 
+            WHERE ST.BRANCH_ID = :bid GROUP BY P.PROD_NAME 
+            ORDER BY SUM(PS.PS_QUANTITY) DESC FETCH FIRST 1 ROWS ONLY";
 $stidTP = oci_parse($conn, $qTopProd); oci_bind_by_name($stidTP, ":bid", $myBranchID); oci_execute($stidTP);
 $topProd = oci_fetch_assoc($stidTP)['PROD_NAME'] ?? 'None';
 
-$qTopStaff = "SELECT S.STAFF_NAME FROM STAFF S JOIN SALE SA ON S.STAFF_ID = SA.STAFF_ID WHERE S.BRANCH_ID = :bid GROUP BY S.STAFF_NAME ORDER BY SUM(SA.SALE_GRANDAMOUNT) DESC FETCH FIRST 1 ROWS ONLY";
+// 3. TOP STAFF
+$qTopStaff = "SELECT S.STAFF_NAME 
+            FROM STAFF S 
+            JOIN SALE SA ON S.STAFF_ID = SA.STAFF_ID 
+            WHERE S.BRANCH_ID = :bid 
+            GROUP BY S.STAFF_NAME 
+            ORDER BY SUM(SA.SALE_GRANDAMOUNT) DESC FETCH FIRST 1 ROWS ONLY";
 $stidTS = oci_parse($conn, $qTopStaff); oci_bind_by_name($stidTS, ":bid", $myBranchID); oci_execute($stidTS);
 $topStaff = oci_fetch_assoc($stidTS)['STAFF_NAME'] ?? 'None';
 
-$qTopCust = "SELECT C.CUST_NAME FROM CUSTOMER C JOIN SALE S ON C.CUST_ID = S.CUST_ID JOIN STAFF ST ON S.STAFF_ID = ST.STAFF_ID WHERE ST.BRANCH_ID = :bid GROUP BY C.CUST_NAME ORDER BY SUM(S.SALE_GRANDAMOUNT) DESC FETCH FIRST 1 ROWS ONLY";
+// 4. TOP CUSTOMER
+$qTopCust = "SELECT C.CUST_NAME 
+            FROM CUSTOMER C 
+            JOIN SALE S ON C.CUST_ID = S.CUST_ID 
+            JOIN STAFF ST ON S.STAFF_ID = ST.STAFF_ID 
+            WHERE ST.BRANCH_ID = :bid 
+            GROUP BY C.CUST_NAME 
+            ORDER BY SUM(S.SALE_GRANDAMOUNT) DESC FETCH FIRST 1 ROWS ONLY";
 $stidTC = oci_parse($conn, $qTopCust); oci_bind_by_name($stidTC, ":bid", $myBranchID); oci_execute($stidTC);
 $topCust = oci_fetch_assoc($stidTC)['CUST_NAME'] ?? 'None';
 
-// 3. MAIN ANALYTICS
-$startDate = date('Y-m-01'); $endDate = date('Y-m-d');
-$queryProfit = "SELECT B.BRANCH_NAME, COALESCE(SUM((P.PROD_LISTPRICE - P.PROD_NETPRICE) * PS.PS_QUANTITY), 0) AS TOTAL_PROFIT
-                FROM BRANCH B LEFT JOIN STAFF ST ON B.BRANCH_ID = ST.BRANCH_ID
-                LEFT JOIN SALE S ON ST.STAFF_ID = S.STAFF_ID AND S.SALE_DATE BETWEEN TO_DATE(:sd, 'YYYY-MM-DD') AND TO_DATE(:ed, 'YYYY-MM-DD')
-                LEFT JOIN PRODUCT_SALE PS ON S.SALE_ID = PS.SALE_ID LEFT JOIN PRODUCT P ON PS.PROD_ID = P.PROD_ID
-                GROUP BY B.BRANCH_NAME ORDER BY TOTAL_PROFIT DESC";
-$stidP = oci_parse($conn, $queryProfit); oci_bind_by_name($stidP, ":sd", $startDate); oci_bind_by_name($stidP, ":ed", $endDate); oci_execute($stidP);
-$branchNames = []; $profitData = [];
-while ($row = oci_fetch_assoc($stidP)) { $branchNames[] = $row['BRANCH_NAME']; $profitData[] = (float)$row['TOTAL_PROFIT']; }
+// 5. BRANCH PROFIT DATA FOR CHART
+$queryProfit = "SELECT B.BRANCH_NAME, 
+                       COALESCE(SUM((P.PROD_LISTPRICE - P.PROD_NETPRICE) * PS.PS_QUANTITY), 0) AS TOTAL_PROFIT
+                FROM BRANCH B 
+                LEFT JOIN STAFF ST ON B.BRANCH_ID = ST.BRANCH_ID
+                LEFT JOIN SALE S ON ST.STAFF_ID = S.STAFF_ID 
+                LEFT JOIN PRODUCT_SALE PS ON S.SALE_ID = PS.SALE_ID 
+                LEFT JOIN PRODUCT P ON PS.PROD_ID = P.PROD_ID
+                GROUP BY B.BRANCH_NAME 
+                ORDER BY TOTAL_PROFIT DESC";
 
+$stidP = oci_parse($conn, $queryProfit);
+oci_execute($stidP);
+
+$branchNames = []; 
+$profitData = [];
+
+while ($row = oci_fetch_assoc($stidP)) { 
+    $branchNames[] = $row['BRANCH_NAME']; 
+    $profitData[] = (float)$row['TOTAL_PROFIT']; 
+}
+
+// 6. STOCK EXPIRY ALERTS
 $queryExp = "SELECT P.PROD_NAME, 
                     CASE 
                         WHEN FP.EXPIRY_DATE <= SYSDATE + 3 THEN 'URGENT'
@@ -55,6 +86,7 @@ $queryExp = "SELECT P.PROD_NAME,
              AND FP.EXPIRY_DATE BETWEEN SYSDATE AND SYSDATE + 14 
              AND SK.STOCK_QUANTITY > 0 
              ORDER BY FP.EXPIRY_DATE ASC";
+             
 $stidE = oci_parse($conn, $queryExp); oci_bind_by_name($stidE, ":bid", $myBranchID); oci_execute($stidE);
 $expiryItems = []; while ($row = oci_fetch_assoc($stidE)) { $expiryItems[] = $row; }
 

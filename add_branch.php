@@ -21,13 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $branchPhone = $_POST['branchPhone'];
     $branchEmail = $_POST['branchEmail'];
 
-    // --- 3. PROSES INSERT ---
+    // --- INSERT NEW BRANCH ---
     $query = "INSERT INTO BRANCH (BRANCH_ID, BRANCH_NAME, BRANCH_ADDRESS, BRANCH_PHONE, BRANCH_EMAIL)
               VALUES (:branchID, :branchName, :branchLocation, :branchPhone, :branchEmail)";
     
     $stid = oci_parse($conn, $query);
     
-    // Bind ID yang kita jana tadi ($newBranchID)
     oci_bind_by_name($stid, ":branchID", $newBranchID);
     oci_bind_by_name($stid, ":branchName", $branchName);
     oci_bind_by_name($stid, ":branchLocation", $branchLocation);

@@ -9,7 +9,7 @@ if (!isset($_SESSION['staff_id'])) {
 
 $currentStaffID = $_SESSION['staff_id'];
 
-// 1. FETCH ORDERS WITH PRODUCT NAMES (Requires the ALTER step above)
+// 1. FETCH ORDERS 
 $query = "SELECT o.ORDER_ID, 
                  o.ORDER_DATE, 
                  o.ORDER_QUANTITY, 

@@ -37,16 +37,19 @@ $next_sale_id = "S-" . $next_num;
 
 oci_free_statement($id_stid);
 
-// --- 3. ELYA COMPLEX QUERY (AUDIT) ---
+// --- 3. ELYA COMPLEX QUERY (PROFIT REPORT) ---
 $auditStart = $_GET['auditStart'] ?? date('Y-m-01');
 $auditEnd   = $_GET['auditEnd']   ?? date('Y-m-d');
 
 $queryAudit = "SELECT 
                 B.BRANCH_ID,
-                (SELECT BR.BRANCH_NAME FROM BRANCH BR WHERE BR.BRANCH_ID = B.BRANCH_ID) AS BRANCH_NAME,
+                (SELECT BR.BRANCH_NAME 
+                FROM BRANCH BR 
+                WHERE BR.BRANCH_ID = B.BRANCH_ID) AS BRANCH_NAME,
                 COALESCE(SUM(PS.PS_QUANTITY), 0) AS TOTAL_UNITS_SOLD,
                 TO_CHAR(COALESCE(SUM(P.PROD_LISTPRICE * PS.PS_QUANTITY), 0), '999,990.00') AS TOTAL_REVENUE,
-                TO_CHAR(COALESCE(SUM((P.PROD_LISTPRICE - P.PROD_NETPRICE) * PS.PS_QUANTITY), 0), '999,990.00') AS TOTAL_PROFIT
+                TO_CHAR(COALESCE(SUM((P.PROD_LISTPRICE - P.PROD_NETPRICE) * PS.PS_QUANTITY), 0), '999,990.00') 
+                AS TOTAL_PROFIT
                FROM BRANCH B
                LEFT JOIN STAFF ST ON B.BRANCH_ID = ST.BRANCH_ID
                LEFT JOIN SALE S ON ST.STAFF_ID = S.STAFF_ID 
@@ -68,7 +71,7 @@ while ($row = oci_fetch_assoc($stidAudit)) {
     $all_time_profit += (float)str_replace(',', '', $row['TOTAL_PROFIT']);
 }
 
-// --- 4. STANDARD SALES LIST (UNIQUE ROWS) ---
+// --- 4. STANDARD SALES LIST 
 $querySales = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, 
                       s.CUST_ID, s.STAFF_ID, 
                       SUM(ps.PS_QUANTITY) AS TOTAL_QTY
@@ -209,6 +212,7 @@ window.onload = function() {
         </div>
     </div>
 
+    <!-- Filter Card for profit report Parameters -->
     <div id="audit-filters" class="analysis-filter-card" style="display:none;">
     <div class="analysis-header">
         <h4>Branch Profit Audit Parameters</h4>
@@ -246,6 +250,7 @@ window.onload = function() {
         </table>
     </div>
 
+    <!-- View for profit report -->
     <div id="audit-view" class="table-container" style="display:none;">
         <table>
             <thead style="background:#e3f2fd;">

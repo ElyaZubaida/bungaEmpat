@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($username) || empty($password)) {
         $error_message = "Please fill up all of the form.";
     } else {
-        // Query hanya untuk Staff
         $query = "SELECT STAFF_ID, STAFF_NAME, STAFF_PASSWORD FROM STAFF 
                   WHERE (STAFF_EMAIL = :usr OR STAFF_USERNAME = :usr)";
 

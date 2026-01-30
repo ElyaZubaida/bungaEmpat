@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $suppEmail   = $_POST['suppEmail'];
     $suppAddress = $_POST['suppAddress'];
 
+    // SQL query to update the supplier details
     $query = "UPDATE SUPPLIER 
               SET SUPP_NAME = :name, 
                   SUPP_PHONE = :phone, 

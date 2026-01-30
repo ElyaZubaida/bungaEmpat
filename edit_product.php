@@ -19,13 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     oci_bind_by_name($stid1, ":prodName", $prodName);
     oci_bind_by_name($stid1, ":prodListPrice", $prodListPrice);
 
-    // Execute with NO_AUTO_COMMIT to start transaction
     $result1 = oci_execute($stid1, OCI_NO_AUTO_COMMIT);
 
     if ($result1) {
-        $result2 = true; // Default to true for logic check
+        $result2 = true; 
 
-        // --- 2. UPDATE SUBTYPE DETAILS (Optional but Recommended) ---
+        // --- 2. UPDATE SUBTYPE DETAILS 
         if ($prodCategory === 'Food' && isset($_POST['expiryDate'])) {
             $query2 = "UPDATE FOOD_PRODUCT 
                        SET FOOD_CATEGORY = :fcat, 

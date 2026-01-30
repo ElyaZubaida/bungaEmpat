@@ -36,8 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prodBrand     = $_POST['prodBrand']; 
     $suppID        = $_POST['suppID'];
 
-    // 4. INSERT INTO MAIN PRODUCT TABLE
-    $query1 = "INSERT INTO PRODUCT (PROD_ID, PROD_NAME, PROD_LISTPRICE, PROD_NETPRICE, PROD_BRAND, PROD_CATEGORY, SUPP_ID)
+    // INSERT INTO MAIN PRODUCT TABLE
+    $query1 = "INSERT INTO PRODUCT 
+               (PROD_ID, PROD_NAME, PROD_LISTPRICE, PROD_NETPRICE, PROD_BRAND, PROD_CATEGORY, SUPP_ID)
                VALUES (:pid, :pname, :plp, :pnp, :pbrand, :pcat, :sid)";
     
     $stid1 = oci_parse($conn, $query1);
@@ -49,11 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     oci_bind_by_name($stid1, ":pcat", $prodCategory);
     oci_bind_by_name($stid1, ":sid", $suppID);
 
-    // Execute with NO_AUTO_COMMIT to start a transaction
     $result1 = oci_execute($stid1, OCI_NO_AUTO_COMMIT);
 
     if ($result1) {
-        // 5. INSERT INTO SUBTYPE TABLES
+        // INSERT INTO SUBTYPE TABLES
         if ($prodCategory === 'Food') {
             $foodCat = $_POST['foodType'];
             $expiry  = $_POST['expiryDate'];

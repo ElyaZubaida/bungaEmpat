@@ -56,7 +56,8 @@ while ($row = oci_fetch_assoc($stidTopSpender)) {
 /**
  * STANDARD CUSTOMER DISPLAY
  */
-$queryStandard = "SELECT CUST_ID, CUST_NAME, CUST_EMAIL, CUST_PHONE, CUST_LOYALTYPOINTS, TO_CHAR(CUST_DATEREGISTERED, 'YYYY-MM-DD') AS CUST_DATE 
+$queryStandard = "SELECT CUST_ID, CUST_NAME, CUST_EMAIL, CUST_PHONE, CUST_LOYALTYPOINTS, 
+                TO_CHAR(CUST_DATEREGISTERED, 'YYYY-MM-DD') AS CUST_DATE 
                   FROM CUSTOMER ORDER BY CUST_ID ASC";
 
 $stidStd = oci_parse($conn, $queryStandard);
@@ -189,7 +190,6 @@ include 'sidebar.php';
                                 '<?= $cust['CUST_LOYALTYPOINTS']; ?>',
                                 '<?= $cust['CUST_DATE']; ?>'
                             )">Edit</button>
-                            <button class="btn-delete" onclick="confirmDelete('<?= $cust['CUST_ID']; ?>')">Delete</button>
                         </div>
                     </td>
                 </tr>

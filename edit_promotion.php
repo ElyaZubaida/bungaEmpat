@@ -1,6 +1,7 @@
 <?php
 include 'db_connection.php';
 
+//UPDATE PROMOTION DETAILS
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $query = "UPDATE PROMOTION 
               SET PROMO_NAME = :name, 

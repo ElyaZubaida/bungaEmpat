@@ -17,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   BRANCH_EMAIL = :branchEmail
               WHERE BRANCH_ID = :branchID";
 
-    // Prepare and execute the statement
     $stid = oci_parse($conn, $query);
 
     oci_bind_by_name($stid, ":branchID", $branchID);
