@@ -11,11 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stockQuantity = $_POST['stockQuantity'];
     $stockIn       = $_POST['stockIn'] ?? 0;
     $stockOut      = $_POST['stockOut'] ?? 0;
-
-    // Use Session ID instead of POST ID for better security
     $staffID = $_SESSION['staff_id']; 
 
-    // 2. Prepare the Update Query
+    // 2. Prepare the Update Query for Stocks
     // We update the STAFF_ID to the person currently logged in
     $query = "UPDATE STOCK 
               SET PROD_ID = :prod_id, 

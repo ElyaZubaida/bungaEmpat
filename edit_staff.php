@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle Manager ID: If "None" (empty string) is selected, set to null for Oracle
     $managerID     = !empty($_POST['managerID']) ? $_POST['managerID'] : null;
 
-    // 2. Prepare the Update Query for the STAFF table
+    // Prepare the Update Query for the STAFF table
     $query = "UPDATE STAFF 
               SET STAFF_NAME = :name, 
                   STAFF_USERNAME = :username, 
@@ -33,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stid = oci_parse($conn, $query);
 
-    // 3. Bind the staff variables to the query placeholders
     oci_bind_by_name($stid, ":staff_id", $staffID);
     oci_bind_by_name($stid, ":name", $staffName);
     oci_bind_by_name($stid, ":username", $staffUsername);

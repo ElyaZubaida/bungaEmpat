@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle Manager ID: If "None" is selected, it should be NULL in Oracle
     $manager_id = !empty($_POST['managerID']) ? $_POST['managerID'] : null;
 
-    // --- 3. INSERT PROCESS ---
+    // INSERT NEW STAFF
     $query = "INSERT INTO STAFF (
                 STAFF_ID, STAFF_NAME, STAFF_USERNAME, STAFF_PASSWORD, 
                 STAFF_PHONE, STAFF_EMAIL, STAFF_CATEGORY, STAFF_SALARY, 

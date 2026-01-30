@@ -9,7 +9,7 @@ $seq_row = oci_fetch_assoc($seq_stid);
 $next_branch_id = $seq_row['NEXT_ID'] ?? 'B105'; 
 oci_free_statement($seq_stid);
 
-// Data Fetch
+// FETCH ALL BRANCHES
 $query = "SELECT * FROM BRANCH ORDER BY BRANCH_ID ASC";
 $stid = oci_parse($conn, $query);
 oci_execute($stid);

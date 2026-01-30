@@ -17,9 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $custEmail = $_POST['custEmail'];
     $custPhone = $_POST['custPhone'];
 
-    // --- 3. PROSES INSERT ---
+    // INSERT NEW CUSTOMER 
     // Note: We use '0' and 'SYSDATE' directly in the VALUES clause
-    $query = "INSERT INTO CUSTOMER (CUST_ID, CUST_NAME, CUST_EMAIL, CUST_PHONE, CUST_LOYALTYPOINTS, CUST_DATEREGISTERED)
+    $query = "INSERT INTO CUSTOMER 
+              (CUST_ID, CUST_NAME, CUST_EMAIL, CUST_PHONE, CUST_LOYALTYPOINTS, CUST_DATEREGISTERED)
               VALUES (:custID, :custName, :custEmail, :custPhone, 0, SYSDATE)";
     
     $stid = oci_parse($conn, $query);

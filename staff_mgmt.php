@@ -345,7 +345,6 @@ function updateSalaryEdit() {
                     <td>
                         <div style="display:flex; gap:10px;">
                             <button class="btn-edit" onclick="openEditModal('<?= $s['STAFF_ID']; ?>', '<?= addslashes($s['STAFF_NAME']); ?>', '<?= addslashes($s['STAFF_USERNAME']); ?>', '<?= addslashes($s['STAFF_PASSWORD']); ?>', '<?= $s['STAFF_PHONE']; ?>', '<?= $s['STAFF_EMAIL']; ?>', '<?= $s['STAFF_CATEGORY']; ?>', '<?= $s['STAFF_SALARY']; ?>', '<?= $s['BRANCH_ID']; ?>', '<?= $s['MANAGER_ID']; ?>')">Edit</button>
-                            <button class="btn-delete" onclick="confirmDelete('<?= $s['STAFF_ID']; ?>')">Delete</button>
                         </div>
                     </td>
                 </tr>

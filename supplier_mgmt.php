@@ -130,7 +130,6 @@ include 'sidebar.php';
                                 '<?= $supplier['SUPP_EMAIL']; ?>',
                                 '<?= addslashes($supplier['SUPP_ADDRESS']); ?>'
                             )">Edit</button>
-                            <button class="btn-delete" onclick="confirmDelete('<?= $supplier['SUPP_ID']; ?>')">Delete</button>
                         </div>
                     </td>
                 </tr>

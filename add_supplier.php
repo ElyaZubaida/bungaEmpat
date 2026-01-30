@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $suppEmail   = $_POST['suppEmail'];
     $suppAddress = $_POST['suppAddress']; 
 
-    // 3. Insert - Using SUPP_BRAND column
+    // INSERT NEW SUPPLIER
     $query = "INSERT INTO SUPPLIER (SUPP_ID, SUPP_NAME, SUPP_PHONE, SUPP_BRAND, SUPP_EMAIL, SUPP_ADDRESS)
               VALUES (:id, :name, :phone, :brand, :email, :addr)";
     

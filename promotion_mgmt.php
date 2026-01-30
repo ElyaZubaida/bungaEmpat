@@ -94,7 +94,6 @@ include 'sidebar.php';
                     <td style="color:#f44336; font-weight:700;">RM <?= number_format($promo['PROMO_AMOUNT'], 2); ?></td>
                     <td>
                         <button class="btn-edit" onclick="openEditPromotionModal('<?= $promo['PROMO_ID']; ?>', '<?= addslashes($promo['PROMO_NAME']); ?>', '<?= addslashes($promo['PROMO_DESC']); ?>', '<?= $promo['START_DATE']; ?>', '<?= $promo['END_DATE']; ?>', '<?= $promo['PROMO_AMOUNT']; ?>')">Edit</button>
-                        <button class="btn-delete" onclick="confirmDelete('<?= $promo['PROMO_ID']; ?>')">Delete</button>
                     </td>
                 </tr>
                 <?php endforeach; ?>

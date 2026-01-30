@@ -13,9 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $staffID  = $_POST['staffID'];
     $today    = date('Y-m-d');
 
-    // 1. Insert the main Procurement record
-    $q1 = "INSERT INTO SUPPLIER_ORDER (ORDER_ID, ORDER_DATE, ORDER_QUANTITY, EXPECTED_DELIVERY, ORDER_AMOUNT, SUPP_ID, STAFF_ID, PROD_ID) 
-           VALUES (:oid, TO_DATE(:odate, 'YYYY-MM-DD'), :oqty, TO_DATE(:edate, 'YYYY-MM-DD'), :oamt, :sid, :stid, :pid)";
+    // INSERT INTO SUPPLIER_ORDER
+    $q1 = "INSERT INTO SUPPLIER_ORDER 
+           (ORDER_ID, ORDER_DATE, ORDER_QUANTITY, EXPECTED_DELIVERY, ORDER_AMOUNT, SUPP_ID, STAFF_ID, PROD_ID) 
+           VALUES (:oid, TO_DATE(:odate, 'YYYY-MM-DD'), :oqty, TO_DATE(:edate, 'YYYY-MM-DD'), 
+           :oamt, :sid, :stid, :pid)";
 
     $stid1 = oci_parse($conn, $q1);
     oci_bind_by_name($stid1, ":oid", $orderID);

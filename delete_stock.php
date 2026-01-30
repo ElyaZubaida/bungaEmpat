@@ -4,6 +4,7 @@ include 'db_connection.php';
 if (isset($_GET['stock_id'])) {
     $stockID = $_GET['stock_id'];
 
+    // DELETE STOCK QUERY
     $query = "DELETE FROM STOCK WHERE STOCK_ID = :stock_id";
 
     $stid = oci_parse($conn, $query);

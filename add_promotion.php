@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $next_num = ($id_row['MAX_ID']) ? $id_row['MAX_ID'] + 1 : 1;
     $newPromoID = "P" . str_pad($next_num, 3, "0", STR_PAD_LEFT);
 
-    // 2. Insert with YYYY-MM-DD format (Standard HTML date format)
+    // INSERT NEW PROMOTION
     $query = "INSERT INTO PROMOTION (PROMO_ID, PROMO_NAME, PROMO_DESC, PROMO_STARTDATE, PROMO_ENDDATE, PROMO_AMOUNT)
               VALUES (:id, :name, :descr, TO_DATE(:startD, 'YYYY-MM-DD'), TO_DATE(:endD, 'YYYY-MM-DD'), :amount)";
     
