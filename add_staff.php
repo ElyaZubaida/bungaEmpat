@@ -3,27 +3,32 @@ include 'db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // --- 1. AUTO-INCREMENT LOGIC for STAFF_ID ---
-    // Extracting numeric part after 'ST' (assuming format ST11001)
+    // Extract numeric part after 'ST' (assuming format ST001)
     $id_query = "SELECT MAX(TO_NUMBER(SUBSTR(STAFF_ID, 3))) AS MAX_ID FROM STAFF";
     $id_stid = oci_parse($conn, $id_query);
     oci_execute($id_stid);
     $id_row = oci_fetch_assoc($id_stid);
     
-    // If table is empty, start at 1001. Otherwise, increment.
-    $next_num = ($id_row['MAX_ID']) ? $id_row['MAX_ID'] + 1 : 1001;
-    $newStaffID = "ST" . $next_num; 
+    // If table is empty, start at 1. Otherwise, increment.
+    $next_num = ($id_row['MAX_ID']) ? $id_row['MAX_ID'] + 1 : 1;
+    
+    // Format to STXXX (e.g., ST005)
+    $newStaffID = "ST" . str_pad($next_num, 3, "0", STR_PAD_LEFT); 
     oci_free_statement($id_stid);
 
     // --- 2. COLLECT DATA FROM FORM ---
-    $name      = $_POST['name'];
-    $username  = $_POST['username'];
-    $password  = $_POST['password']; // Note: In production, use password_hash()
-    $phone     = $_POST['phone'];
-    $email     = $_POST['email'];
-    $category  = $_POST['category'];
-    $salary    = $_POST['salary'];
-    $branch_id = $_POST['branch_id'];
-    $manager_id = $_POST['manager_id'];
+    // Updated keys to match the 'name' attributes in your Modal HTML
+    $name       = $_POST['staffName'];
+    $username   = $_POST['staffUser'];
+    $password   = $_POST['staffPass']; 
+    $phone      = $_POST['staffPhone'] ?? 'N/A'; // Handled optional/missing fields
+    $email      = $_POST['staffEmail'] ?? 'N/A';
+    $category   = $_POST['staffCat'];
+    $salary     = $_POST['staffSalary'];
+    $branch_id  = $_POST['branchID'];
+    
+    // Handle Manager ID: If "None" is selected, it should be NULL in Oracle
+    $manager_id = !empty($_POST['managerID']) ? $_POST['managerID'] : null;
 
     // --- 3. INSERT PROCESS ---
     $query = "INSERT INTO STAFF (

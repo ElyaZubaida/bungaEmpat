@@ -753,3 +753,253 @@ form input:focus { border-color: var(--pink-dark); box-shadow: 0 0 8px rgba(255,
     font-weight: 500;
     margin: 0;
 }
+
+.filter-select, .filter-input, .btn-analysis { height: 45px !important; box-sizing: border-box !important; }
+        .filter-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .urgent { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+        .warning { background: #fff3e0; color: #ef6c00; border: 1px solid #ffcc80; }
+        .sub-text { font-size: 0.75rem; color: #888; display: block; }
+        
+        /* Compact Search Styling */
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 15px;
+            border: 1px solid var(--pink-soft);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .search-box { flex: 2; }
+        .category-box { flex: 1; }
+
+.search-container {
+            display: flex; gap: 10px; margin-bottom: 20px; padding: 15px;
+            background: #fff; border-radius: 15px; border: 1px solid #ffdeeb;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .sub-text { font-size: 0.75rem; color: #888; display: block; }
+        .modal-body label { display: block; font-size: 0.8em; font-weight: 700; margin: 10px 0 5px 0; color: #7d5a5a; }
+        .modal-body input, .modal-body select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 3000; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.4); 
+    backdrop-filter: blur(4px);
+    align-items: center; 
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white; 
+    border-radius: 25px;
+    width: 90%;
+    max-width: 480px; 
+    max-height: 85vh; 
+    overflow-y: auto; 
+    position: relative;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: modalScaleIn 0.3s ease-out;
+}
+
+/* Header with Title and X on the same line */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--pink-soft);
+    padding-bottom: 10px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: var(--pink-dark);
+}
+
+.close {
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+    line-height: 1;
+    transition: 0.2s;
+}
+
+.close:hover {
+    color: var(--pink-dark);
+}
+
+/* Form Styling within Modal */
+.modal-body label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 15px 0 5px 5px;
+    color: var(--pink-dark);
+}
+
+.modal-body input, 
+.modal-body select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--pink-soft);
+    border-radius: 12px;
+    box-sizing: border-box;
+    font-family: 'Quicksand', sans-serif;
+    outline: none;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+}
+
+.input-row > div {
+    flex: 1;
+}
+
+/* Full Width Button */
+.modal-btn-full {
+    width: 100% !important;
+    background: linear-gradient(135deg, #ff85a1, #fd79a8);
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 25px;
+    cursor: pointer;
+}
+
+.modal-content {
+    background-color: white; 
+    border-radius: 25px;
+    width: 100%;
+    max-width: 480px; /* Small centered popup */
+    max-height: 85vh; /* Prevents taking whole screen height */
+    overflow-y: auto; /* Makes internal content scrollable */
+    position: relative;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: modalScaleIn 0.3s ease-out;
+}
+
+@keyframes modalScaleIn { 
+    from { transform: scale(0.9); opacity: 0; } 
+    to { transform: scale(1); opacity: 1; } 
+}
+
+/* Modal Form Elements */
+.modal-body label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 15px 0 5px 5px;
+    color: var(--pink-dark);
+}
+
+.modal-body input, 
+.modal-body select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--pink-soft);
+    border-radius: 12px;
+    box-sizing: border-box;
+    font-family: 'Quicksand', sans-serif;
+    outline: none;
+}
+
+/* Button Fills Whole Way */
+.btn-save, .modal-body button[type="submit"] {
+    width: 100% !important;
+    display: block;
+    background: linear-gradient(135deg, #ff85a1, #fd79a8);
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 25px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(253, 121, 168, 0.4);
+}
+
+/* Sales Table Styling */
+/* POS Table Styling */
+.sales-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px; /* Space between rows */
+}
+
+.sales-table th {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #bfa2a2;
+    font-weight: 700;
+    padding: 10px;
+    border-bottom: 2px solid #fff0f5;
+}
+
+.sales-table td {
+    background: #ffffff;
+    padding: 15px 10px;
+    border-top: 1px solid #ffeff5;
+    border-bottom: 1px solid #ffeff5;
+}
+
+.sales-table td:first-child { border-left: 1px solid #ffeff5; border-radius: 12px 0 0 12px; }
+.sales-table td:last-child { border-right: 1px solid #ffeff5; border-radius: 0 12px 12px 0; }
+
+/* Input Styling inside Modal */
+.row-input {
+    border: 1px solid #ffe0eb !important;
+    border-radius: 10px !important;
+    padding: 10px !important;
+    transition: all 0.3s ease;
+}
+
+.row-input:focus {
+    border-color: #ff85a1 !important;
+    box-shadow: 0 0 8px rgba(255, 133, 161, 0.2);
+    outline: none;
+}
+
+/* Summary Section */
+.checkout-summary {
+    background: linear-gradient(135deg, #fff9fb 0%, #fdf6f9 100%);
+    padding: 25px;
+    border-radius: 20px;
+    border: 2px dashed #ffdeeb;
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-amount-display {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #2e7d32;
+    text-align: right;
+    border: none;
+    background: transparent;
+    width: 250px;
+}

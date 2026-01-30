@@ -4,16 +4,19 @@ include 'db_connection.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // 1. Collect data from the Edit Staff Modal form
-    $staffID       = $_POST['staff_id'];
-    $staffName     = $_POST['name'];
-    $staffUsername = $_POST['username'];
-    $staffPassword = $_POST['password'];
-    $staffPhone    = $_POST['phone'];
-    $staffEmail    = $_POST['email'];
-    $staffCategory = $_POST['category'];
-    $staffSalary   = $_POST['salary'];
-    $branchID      = $_POST['branch_id'];
-    $managerID     = $_POST['manager_id'];
+    // Updated keys to match the 'name' attributes in your Modal HTML
+    $staffID       = $_POST['staffID'];
+    $staffName     = $_POST['staffName'];
+    $staffUsername = $_POST['staffUser'];
+    $staffPassword = $_POST['staffPass'];
+    $staffPhone     = $_POST['staffPhone'];
+    $staffEmail     = $_POST['staffEmail'];
+    $staffCategory = $_POST['staffCat'];
+    $staffSalary   = $_POST['staffSalary'];
+    $branchID      = $_POST['branchID'];
+    
+    // Handle Manager ID: If "None" (empty string) is selected, set to null for Oracle
+    $managerID     = !empty($_POST['managerID']) ? $_POST['managerID'] : null;
 
     // 2. Prepare the Update Query for the STAFF table
     $query = "UPDATE STAFF 
@@ -30,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stid = oci_parse($conn, $query);
 
-    // 3. Bind the staff variables to the query
+    // 3. Bind the staff variables to the query placeholders
     oci_bind_by_name($stid, ":staff_id", $staffID);
     oci_bind_by_name($stid, ":name", $staffName);
     oci_bind_by_name($stid, ":username", $staffUsername);
@@ -42,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     oci_bind_by_name($stid, ":branch_id", $branchID);
     oci_bind_by_name($stid, ":manager_id", $managerID);
 
+    // 4. Execute the statement
     $result = oci_execute($stid);
 
     if ($result) {
@@ -53,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo "Error updating staff: " . htmlentities($e['message']);
     }
 
+    // 5. Clean up resources
     oci_free_statement($stid);
     oci_close($conn);
 }

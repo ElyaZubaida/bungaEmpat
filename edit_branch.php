@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $branchPhone = $_POST['branchPhone'];
     $branchEmail = $_POST['branchEmail'];
 
-    // Prepare the SQL query to update the branch details
+    // SQL query to update the branch details
     $query = "UPDATE BRANCH 
               SET BRANCH_NAME = :branchName, 
                   BRANCH_ADDRESS = :branchLocation, 

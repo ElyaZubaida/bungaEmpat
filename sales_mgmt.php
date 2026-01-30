@@ -1,18 +1,43 @@
 <?php
+session_start();
 include 'db_connection.php';
 
-// --- 1. EXISTING FETCH LOGIC ---
-$cust_stid = oci_parse($conn, "SELECT CUST_ID, CUST_NAME FROM CUSTOMER");
+if (!isset($_SESSION['staff_id'])) {
+    header("Location: index.php");
+    exit();
+}
+
+$currentStaffID = $_SESSION['staff_id'];
+
+// --- 1. FETCH DATA FOR DROPDOWNS ---
+$cust_stid = oci_parse($conn, "SELECT CUST_ID, CUST_NAME FROM CUSTOMER ORDER BY CUST_NAME");
 oci_execute($cust_stid);
-$customers = [];
-while ($row = oci_fetch_assoc($cust_stid)) { $customers[] = $row; }
+$allCustomers = [];
+while ($row = oci_fetch_assoc($cust_stid)) { $allCustomers[] = $row; }
 
-$staff_stid = oci_parse($conn, "SELECT STAFF_ID, STAFF_NAME FROM STAFF");
-oci_execute($staff_stid);
-$staff_members = [];
-while ($row = oci_fetch_assoc($staff_stid)) { $staff_members[] = $row; }
+$p_stid = oci_parse($conn, "SELECT PROD_ID, PROD_NAME, PROD_LISTPRICE FROM PRODUCT ORDER BY PROD_NAME");
+oci_execute($p_stid);
+$allProducts = []; 
+while($r = oci_fetch_assoc($p_stid)) { $allProducts[] = $r; }
 
-// --- ELYA COMPLEX QUERY ---
+$pr_stid = oci_parse($conn, "SELECT PROMO_ID, PROMO_AMOUNT FROM PROMOTION ORDER BY PROMO_ID");
+oci_execute($pr_stid);
+$allPromos = []; 
+while($r = oci_fetch_assoc($pr_stid)) { $allPromos[] = $r; }
+
+// --- 2. GENERATE NEXT SALE ID (S-XXXXX) ---
+$id_q = "SELECT MAX(TO_NUMBER(SUBSTR(SALE_ID, 3))) AS MAX_VAL FROM SALE";
+$id_stid = oci_parse($conn, $id_q);
+oci_execute($id_stid);
+$id_row = oci_fetch_assoc($id_stid);
+
+$max_found = (int)$id_row['MAX_VAL'];
+$next_num = ($max_found > 0) ? $max_found + 1 : 10001;
+$next_sale_id = "S-" . $next_num;
+
+oci_free_statement($id_stid);
+
+// --- 3. ELYA COMPLEX QUERY (AUDIT) ---
 $auditStart = $_GET['auditStart'] ?? date('Y-m-01');
 $auditEnd   = $_GET['auditEnd']   ?? date('Y-m-d');
 
@@ -37,21 +62,20 @@ oci_bind_by_name($stidAudit, ":end_dt", $auditEnd);
 oci_execute($stidAudit);
 
 $auditData = [];
-while ($row = oci_fetch_assoc($stidAudit)) { $auditData[] = $row; }
-
 $all_time_profit = 0;
-foreach ($auditData as $row) {
-    // We strip the commas from the TO_CHAR result to make it a number again
-    $numeric_profit = (float)str_replace(',', '', $row['TOTAL_PROFIT']);
-    $all_time_profit += $numeric_profit;
+while ($row = oci_fetch_assoc($stidAudit)) { 
+    $auditData[] = $row; 
+    $all_time_profit += (float)str_replace(',', '', $row['TOTAL_PROFIT']);
 }
 
-// --- 3. STANDARD SALES LIST ---
-$querySales = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_AMOUNT, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, 
-                      s.CUST_ID, s.STAFF_ID, s.PROMO_ID, ps.PS_QUANTITY, ps.PS_SUBPRICE
+// --- 4. STANDARD SALES LIST (UNIQUE ROWS) ---
+$querySales = "SELECT s.SALE_ID, s.SALE_DATE, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, 
+                      s.CUST_ID, s.STAFF_ID, 
+                      SUM(ps.PS_QUANTITY) AS TOTAL_QTY
                FROM SALE s
                JOIN PRODUCT_SALE ps ON s.SALE_ID = ps.SALE_ID
-               ORDER BY s.SALE_ID DESC";
+               GROUP BY s.SALE_ID, s.SALE_DATE, s.SALE_GRANDAMOUNT, s.SALE_PAYMENTTYPE, s.CUST_ID, s.STAFF_ID
+               ORDER BY s.SALE_DATE DESC, s.SALE_ID DESC";
 
 $stidSales = oci_parse($conn, $querySales);
 oci_execute($stidSales);
@@ -73,99 +97,149 @@ include 'sidebar.php';
     <meta charset="UTF-8">
     <title>Sales Management | Bunga Admin</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .sales-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        .sales-table th { text-transform: uppercase; font-size: 0.7rem; color: #bfa2a2; letter-spacing: 1px; padding: 10px; }
+        .sales-table td { background: #fff; padding: 12px; vertical-align: middle; border-bottom: 1px solid #f9f9f9; }
+        .row-input { border: 1px solid #ffdeeb !important; border-radius: 8px !important; height: 38px !important; margin: 0 !important; width: 100%; }
+        .checkout-summary { background: #fdf6f9; padding: 20px; border-radius: 15px; border: 2px dashed #ffdeeb; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .grand-total-amount { font-size: 2.2rem; font-weight: 700; color: #2e7d32; background: transparent; border: none; text-align: right; width: 220px; }
+        .btn-add-row { background: transparent; color: #ff85a1; border: 2px dashed #ff85a1; width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600; margin-top: 10px; transition: 0.3s; }
+        .btn-add-row:hover { background: #fff0f5; }
+        .btn-remove { color: #ff5e5e; border: none; background: none; font-size: 1.5rem; cursor: pointer; }
+    </style>
     <script>
-        function showView(viewType) {
-            const standardView = document.getElementById('standard-view');
-            const auditView = document.getElementById('audit-view');
-            const auditFilters = document.getElementById('audit-filters');
-            const title = document.getElementById('view-title');
+        let productList = <?= json_encode($allProducts); ?>;
 
-            if (viewType === 'AUDIT') {
-                standardView.style.display = 'none';
-                auditView.style.display = 'block';
-                auditFilters.style.display = 'flex';
-                title.innerText = "Branch Profit Audit Report";
-            } else {
-                standardView.style.display = 'block';
-                auditView.style.display = 'none';
-                auditFilters.style.display = 'none';
-                title.innerText = "Recent Transactions";
+        // Function to toggle between Standard and Audit views
+function showView(viewType) {
+    const standardView = document.getElementById('standard-view');
+    const auditView = document.getElementById('audit-view');
+    const auditFilters = document.getElementById('audit-filters');
+    const title = document.getElementById('view-title');
+
+    if (viewType === 'AUDIT') {
+        standardView.style.display = 'none';
+        auditView.style.display = 'block';
+        auditFilters.style.display = 'block'; // Shows the Analysis Card
+        title.innerText = "Branch Profit Audit Report";
+    } else {
+        standardView.style.display = 'block';
+        auditView.style.display = 'none';
+        auditFilters.style.display = 'none';
+        title.innerText = "Recent Transactions";
+    }
+}
+
+// CRITICAL: This part ensures the view stays on the Audit Table after clicking filter
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    // If the URL has auditStart, it means the user just pressed the filter button
+    if (urlParams.has('auditStart')) {
+        showView('AUDIT');
+    }
+};
+        function addProductRow() {
+            const tbody = document.getElementById('productBody');
+            const rowId = Date.now();
+            const tr = document.createElement('tr');
+            tr.id = `row_${rowId}`;
+            tr.innerHTML = `
+                <td>
+                    <input list="prodList_${rowId}" name="prodId[]" onchange="updatePrice(${rowId}, this)" class="filter-input row-input" placeholder="Search product...">
+                    <datalist id="prodList_${rowId}">${productList.map(p => `<option value="${p.PROD_ID}">${p.PROD_NAME}</option>`).join('')}</datalist>
+                </td>
+                <td><input type="text" id="price_${rowId}" readonly style="border:none; background:transparent; text-align:center; width:100%;"></td>
+                <td><input type="number" name="qty[]" id="qty_${rowId}" value="1" min="1" oninput="calculateRow(${rowId})" class="filter-input row-input"></td>
+                <td><input type="text" id="total_${rowId}" readonly style="border:none; background:transparent; font-weight:bold; text-align:right; width:100%; color:#2e7d32;"></td>
+                <td><button type="button" class="btn-remove" onclick="removeRow(${rowId})">&times;</button></td>`;
+            tbody.appendChild(tr);
+        }
+
+        function updatePrice(rowId, input) {
+            const prod = productList.find(p => p.PROD_ID === input.value);
+            if (prod) {
+                document.getElementById(`price_${rowId}`).value = prod.PROD_LISTPRICE;
+                calculateRow(rowId);
             }
         }
 
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('auditStart')) showView('AUDIT');
-        };
+        function calculateRow(rowId) {
+            const price = parseFloat(document.getElementById(`price_${rowId}`).value) || 0;
+            const qty = parseInt(document.getElementById(`qty_${rowId}`).value) || 0;
+            document.getElementById(`total_${rowId}`).value = (price * qty).toFixed(2);
+            updateGrandTotal();
+        }
+
+        function updateGrandTotal() {
+            let subtotal = 0;
+            document.querySelectorAll('[id^="total_"]').forEach(i => subtotal += parseFloat(i.value) || 0);
+            const promo = document.getElementById('pos_Promo');
+            const disc = parseFloat(promo.options[promo.selectedIndex].getAttribute('data-amount')) || 0;
+            const grandTotal = Math.max(0, subtotal - disc);
+            document.getElementById('grandTotalDisplay').value = grandTotal.toFixed(2);
+            document.getElementById('hiddenGrandTotal').value = grandTotal.toFixed(2);
+            document.getElementById('hiddenAmount').value = subtotal.toFixed(2);
+        }
+
+        function removeRow(rowId) { document.getElementById(`row_${rowId}`).remove(); updateGrandTotal(); }
+        function openAddSaleModal() { document.getElementById("addSaleModal").style.display = "flex"; if(document.getElementById('productBody').children.length === 0) addProductRow(); }
+        function closeModal() { document.getElementById("addSaleModal").style.display = "none"; }
     </script>
 </head>
 <body>
-
 <div class="main-content">
     <div class="dashboard-header">
         <h1>Sales Management</h1>
-        <button class="btn-add" onclick="window.location.href='create_sale.php'">+ Create New Sale</button>
+        <button class="btn-add" onclick="openAddSaleModal()">+ Create New Sale</button>
     </div>
-
-    <div class="section-divider"></div>
 
     <div class="stats-grid">
         <div class="stat-card" onclick="showView('STANDARD')" style="cursor:pointer;">
-            <h3 style="color: #fd79a8;">Total Transactions</h3>
-            <span class="stat-number"  style="color: #fd79a8;"><?= count($sales); ?></span>
+            <h3>Total Transactions</h3>
+            <span class="stat-number"><?= count($sales); ?></span>
         </div>
-
-        <div class="stat-card" style="border-left-color: #4CAF50;">
-            <h3 style="color: #4CAF50;">Total Revenue</h3>
-            <span class="stat-number" style="color: #4CAF50;">RM <?= number_format($total_revenue_stats, 2); ?></span>
+        <div class="stat-card">
+            <h3>Total Revenue</h3>
+            <span class="stat-number">RM <?= number_format($total_revenue_stats, 2); ?></span>
         </div>
-
-        <div class="stat-card" onclick="showView('AUDIT')" style="border-left-color: #4361ee; cursor:pointer;">
-            <h3 style="color: #4361ee;">All-Time Total Profit</h3>
+        <div class="stat-card" onclick="showView('AUDIT')" style="cursor:pointer; border-left-color: #4361ee;">
+            <h3>Total Profit</h3>
             <span class="stat-number" style="color: #4361ee;">RM <?= number_format($all_time_profit, 2); ?></span>
-            <small style="display:block; color: #4361ee; font-weight:600;">View Branch Breakdown</small>
         </div>
     </div>
-    <h2 id="view-title" style="font-size: 1.1em; color: #555; margin-bottom: 15px;">Recent Transactions</h2>
 
-    <div id="audit-filters" class="filter-container" style="display:none;">
-        <form method="GET" style="display: contents;">
-            <div class="filter-group">
-                <label>Start Date</label>
-                <input type="date" name="auditStart" value="<?= $auditStart ?>">
-            </div>
-            <div class="filter-group">
-                <label>End Date</label>
-                <input type="date" name="auditEnd" value="<?= $auditEnd ?>">
-            </div>
-            <div class="filter-group">
-                <label style="visibility: hidden;">Align</label>
-                <button type="submit" class="btn-filter">Generate Report</button>
-            </div>
-        </form>
+    <div id="audit-filters" class="analysis-filter-card" style="display:none;">
+    <div class="analysis-header">
+        <h4>Branch Profit Audit Parameters</h4>
+        <p>Review financial performance across branches for a specific date range.</p>
     </div>
+    <form method="GET" class="filter-row">
+        <div class="filter-field">
+            <label>Start Date</label>
+            <input type="date" name="auditStart" class="filter-input" value="<?= $auditStart ?>">
+        </div>
+        <div class="filter-field">
+            <label>End Date</label>
+            <input type="date" name="auditEnd" class="filter-input" value="<?= $auditEnd ?>">
+        </div>
+        <button type="submit" class="btn-analysis">Generate Audit</button>
+    </form>
+</div>
 
     <div id="standard-view" class="table-container">
         <table>
-            <thead>
-                <tr>
-                    <th>ID</th><th>Date</th><th>Grand Total</th><th>Payment</th><th>Qty</th><th>Customer</th><th>Staff</th>
-                </tr>
-            </thead>
+            <thead><tr><th>ID</th><th>Date</th><th>Grand Total</th><th>Payment</th><th>Qty</th><th>Customer</th><th>Staff</th></tr></thead>
             <tbody>
-                <?php foreach ($sales as $sale) : ?>
+                <?php foreach ($sales as $s) : ?>
                 <tr>
-                    <td><?= $sale['SALE_ID']; ?></td>
-                    <td><?= $sale['SALE_DATE']; ?></td>
-                    <td style="font-weight:600;">RM <?= number_format($sale['SALE_GRANDAMOUNT'], 2); ?></td>
-                    <td>
-                        <span class="badge" style="<?= ($sale['SALE_PAYMENTTYPE'] == 'Cash') ? 'background:#e8f5e9; color:#2e7d32;' : 'background:#e3f2fd; color:#1565c0;'; ?> padding: 4px 10px; border-radius:4px;">
-                            <?= $sale['SALE_PAYMENTTYPE']; ?>
-                        </span>
-                    </td>
-                    <td><?= $sale['PS_QUANTITY']; ?></td>
-                    <td><?= $sale['CUST_ID'] ?: '-'; ?></td>
-                    <td><?= $sale['STAFF_ID']; ?></td>
+                    <td><strong><?= $s['SALE_ID']; ?></strong></td>
+                    <td><?= $s['SALE_DATE']; ?></td>
+                    <td style="font-weight:700; color: #2e7d32;">RM <?= number_format($s['SALE_GRANDAMOUNT'], 2); ?></td>
+                    <td><span class="badge"><?= $s['SALE_PAYMENTTYPE']; ?></span></td>
+                    <td><?= $s['TOTAL_QTY']; ?></td>
+                    <td><?= $s['CUST_ID'] ?: 'Walk-in'; ?></td>
+                    <td><?= $s['STAFF_ID']; ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -174,14 +248,8 @@ include 'sidebar.php';
 
     <div id="audit-view" class="table-container" style="display:none;">
         <table>
-            <thead>
-                <tr style="background:#e3f2fd;">
-                    <th>Branch ID</th>
-                    <th>Branch Name</th>
-                    <th>Units Sold</th>
-                    <th>Total Revenue</th>
-                    <th>Total Profit</th>
-                </tr>
+            <thead style="background:#e3f2fd;">
+                <tr><th>Branch ID</th><th>Branch Name</th><th>Units Sold</th><th>Revenue</th><th>Profit</th></tr>
             </thead>
             <tbody>
                 <?php foreach ($auditData as $row) : ?>
@@ -195,6 +263,102 @@ include 'sidebar.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
+    </div>
+</div>
+
+<div id="addSaleModal" class="modal">
+    <div class="modal-content" style="max-width: 900px; border-radius: 30px; padding: 40px; border: none;">
+        <div class="modal-header" style="border: none; padding-bottom: 0;">
+            <h2 style="color: #ff85a1; font-size: 1.8rem;">New Transaction</h2>
+            <span class="close-btn" onclick="closeModal()" style="font-size: 2rem;">&times;</span>
+        </div>
+
+        <div class="modal-body">
+            <form action="add_sales.php" method="post" id="saleForm">
+                <input type="hidden" name="staffId" value="<?= $currentStaffID ?>">
+
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 30px;">
+                    <div style="background: #fdf6f9; padding: 15px; border-radius: 15px;">
+                        <label style="color: #bfa2a2; font-size: 0.7rem; font-weight: 800; display: block; margin-bottom: 5px;">SALE ID</label>
+                        <input type="text" value="<?= $next_sale_id ?>" readonly style="font-size: 1.2rem; font-weight: 700; color: #7d5a5a; border: none; background: transparent; padding: 0;">
+                        <input type="hidden" name="saleID" value="<?= $next_sale_id ?>">
+                    </div>
+                    <div style="background: #fdf6f9; padding: 15px; border-radius: 15px;">
+                        <label style="color: #bfa2a2; font-size: 0.7rem; font-weight: 800; display: block; margin-bottom: 5px;">CUSTOMER SEARCH</label>
+                        <input list="customerList" name="custId" placeholder="Search by name or ID (Leave blank for Walk-in)" class="filter-input row-input" style="background: white;">
+                        <datalist id="customerList">
+                            <?php foreach($allCustomers as $c): ?>
+                                <option value="<?= $c['CUST_ID'] ?>"><?= $c['CUST_NAME'] ?></option>
+                            <?php endforeach; ?>
+                        </datalist>
+                    </div>
+                </div>
+
+                <div style="max-height: 350px; overflow-y: auto; padding-right: 10px;">
+                    <table class="sales-table">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th style="width: 130px; text-align: center;">Price</th>
+                                <th style="width: 100px; text-align: center;">Qty</th>
+                                <th style="width: 150px; text-align: right;">Subtotal</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="productBody">
+                            </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn-add-row" onclick="addProductRow()">
+                    <span style="font-size: 1.2rem; margin-right: 8px;">+</span> Add Another Item
+                </button>
+
+                <div style="display: flex; gap: 20px; margin-top: 30px; align-items: flex-start;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+                        <div>
+                            <label style="color: #bfa2a2; font-size: 0.75rem; font-weight: 800; display: block; margin-bottom: 8px;">PAYMENT TYPE</label>
+                            <select name="salePaymentType" class="filter-input row-input" required>
+                                <option>Cash</option>
+                                <option>Card</option>
+                                <option>E-Wallet</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: #bfa2a2; font-size: 0.75rem; font-weight: 800; display: block; margin-bottom: 8px;">APPLY PROMO</label>
+                            <select name="promoId" id="pos_Promo" onchange="updateGrandTotal()" class="filter-input row-input">
+                                <option value="" data-amount="0">No Promotion</option>
+                                <?php foreach($allPromos as $pr): ?>
+                                    <option value="<?= $pr['PROMO_ID'] ?>" data-amount="<?= $pr['PROMO_AMOUNT'] ?>">
+                                        <?= $pr['PROMO_ID'] ?> (-RM <?= $pr['PROMO_AMOUNT'] ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="flex: 1.5;">
+                        <div class="checkout-summary">
+                            <div style="text-align: left;">
+                                <span style="display: block; font-size: 0.8rem; font-weight: 800; color: #7d5a5a;">FINAL TOTAL</span>
+                                <span style="font-size: 0.7rem; color: #bfa2a2;">Including all discounts</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="font-size: 1.8rem; font-weight: 800; color: #2e7d32; margin-right: 5px;">RM</span>
+                                <input type="text" id="grandTotalDisplay" readonly value="0.00" class="total-amount-display">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="saleGrandAmount" id="hiddenGrandTotal">
+                <input type="hidden" name="saleAmount" id="hiddenAmount">
+
+                <button type="submit" class="modal-btn-full" style="height: 60px; font-size: 1.2rem; background: #ff85a1; border-radius: 18px; margin-top: 30px; box-shadow: 0 10px 20px rgba(255, 133, 161, 0.2);">
+                    Complete Payment & Save
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 </body>

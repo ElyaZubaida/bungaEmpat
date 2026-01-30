@@ -12,7 +12,7 @@ if (isset($_GET['staff_id'])) {
     $result = oci_execute($stid);
 
     if ($result) {
-        header('Location: customer_mgmt.php');
+        header('Location: staff_mgmt.php');
         exit(); 
     } else {
         echo "Error deleting Staff details.";
@@ -21,7 +21,7 @@ if (isset($_GET['staff_id'])) {
     oci_free_statement($stid);
     oci_close($conn);
 } else {
-    header('Location: customer_mgmt.php');
+    header('Location: staff_mgmt.php');
     exit();
 }
 ?>

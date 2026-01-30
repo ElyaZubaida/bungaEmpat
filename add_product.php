@@ -2,44 +2,41 @@
 include 'db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // 1. Tentukan Prefix & Start Position berdasarkan Kategori
-    $prodCategory = $_POST['prodCategory']; // 'Food' atau 'Non-Food'
+    $prodCategory = $_POST['prodCategory']; 
     
+    // 1. Setup Prefix
     if ($prodCategory === 'Food') {
         $prefix = "F-";
-        $startPos = 3; // 'F-' adalah 2 karakter, nombor mula posisi 3
     } else {
         $prefix = "NF-";
-        $startPos = 4; // 'NF-' adalah 3 karakter, nombor mula posisi 4
     }
 
-    // 2. LOGIK AUTO-INCREMENT DINAMIK
-    // Cari MAX ID spesifik untuk prefix yang dipilih sahaja
-    $id_query = "SELECT MAX(TO_NUMBER(SUBSTR(PROD_ID, :startPos))) AS MAX_VAL 
+    // 2. ROBUST AUTO-INCREMENT LOGIC
+    // We use REGEXP_REPLACE to ignore non-numeric junk like "-X" or letters 
+    // This prevents the ORA-01722 error you saw earlier.
+    $id_query = "SELECT MAX(TO_NUMBER(REGEXP_REPLACE(PROD_ID, '[^0-9]', ''))) AS MAX_VAL 
                  FROM PRODUCT WHERE PROD_ID LIKE :prefixPattern";
     
     $id_stid = oci_parse($conn, $id_query);
     $pattern = $prefix . '%';
-    oci_bind_by_name($id_stid, ":startPos", $startPos);
     oci_bind_by_name($id_stid, ":prefixPattern", $pattern);
     oci_execute($id_stid);
     
     $id_row = oci_fetch_assoc($id_stid);
     $latest_num = $id_row['MAX_VAL'];
 
-    // Mula dari 1001 (atau apa-apa nombor anda mahu)
     $next_num = ($latest_num) ? $latest_num + 1 : 1001;
     $newProdID = $prefix . $next_num; 
     oci_free_statement($id_stid);
 
-    // 3. AMBIL DATA UMUM
+    // 3. COLLECT FORM DATA
     $prodName      = $_POST['prodName'];
     $prodListPrice = $_POST['prodListPrice'];
     $prodNetPrice  = $_POST['prodNetPrice'];
     $prodBrand     = $_POST['prodBrand']; 
     $suppID        = $_POST['suppID'];
 
-    // 4. INSERT KE TABLE PRODUCT
+    // 4. INSERT INTO MAIN PRODUCT TABLE
     $query1 = "INSERT INTO PRODUCT (PROD_ID, PROD_NAME, PROD_LISTPRICE, PROD_NETPRICE, PROD_BRAND, PROD_CATEGORY, SUPP_ID)
                VALUES (:pid, :pname, :plp, :pnp, :pbrand, :pcat, :sid)";
     
@@ -52,10 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     oci_bind_by_name($stid1, ":pcat", $prodCategory);
     oci_bind_by_name($stid1, ":sid", $suppID);
 
+    // Execute with NO_AUTO_COMMIT to start a transaction
     $result1 = oci_execute($stid1, OCI_NO_AUTO_COMMIT);
 
     if ($result1) {
-        // 5. INSERT KE SUBTYPE
+        // 5. INSERT INTO SUBTYPE TABLES
         if ($prodCategory === 'Food') {
             $foodCat = $_POST['foodType'];
             $expiry  = $_POST['expiryDate'];
@@ -79,10 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result2 = oci_execute($stid2, OCI_NO_AUTO_COMMIT);
 
         if ($result2) {
+            // Success! Commit both inserts
             oci_commit($conn);
             header("Location: product_mgmt.php");
             exit();
         } else {
+            // Subtype failed, undo the first insert
             oci_rollback($conn);
             $e = oci_error($stid2);
             die("Error Subtype: " . $e['message']);
